@@ -33,7 +33,7 @@ export default function Home() {
         <h1 className="text-4xl font-bold">Deals Of The Month</h1>
         <p className="my-10 text-gray-600">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptatum magni saepe dolores ipsam mollitia tempore ducimus molestiae corrupti error veniam?</p>
         <Button className="mb-10">Buy Now</Button>
-        <h2 className="text-3xl">Hurry, Before It's Too Late!</h2>
+        <h2 className="text-3xl">Hurry, Before It&apos;s Too Late!</h2>
       </div>
 
       <div className="flex gap-5 w-[calc(100vw-20px)] lg:w-[60%] overflow-x-hidden hide-scrollbar relative">
@@ -72,8 +72,8 @@ export default function Home() {
           </div>
 
           <div className="flex w-[90vw] lg:w-[1250px] justify-between items-center gap-10 mb-10 overflow-x-auto">
-            <div className="w-[207px] text-lg text-center rounded-lg p-2 cursor-pointer  text-gray-500">Men's Fashion</div>
-            <div className="w-[207px] text-lg text-center rounded-lg p-2 cursor-pointer text-white bg-primary">Women's Fashion</div>
+            <div className="w-[207px] text-lg text-center rounded-lg p-2 cursor-pointer  text-gray-500">Men&apos;s Fashion</div>
+            <div className="w-[207px] text-lg text-center rounded-lg p-2 cursor-pointer text-white bg-primary">Women&apos;s Fashion</div>
             <div className="w-[207px] text-lg text-center rounded-lg p-2 cursor-pointer text-gray-500">Women Accessories</div>
             <div className="w-[207px] text-lg text-center rounded-lg p-2 cursor-pointer text-gray-500">Men Accessories</div>
             <div className="w-[207px] text-lg text-center rounded-lg p-2 cursor-pointer text-gray-500">Discount Deals</div>
