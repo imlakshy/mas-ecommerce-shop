@@ -8,9 +8,7 @@ body {
 
 .hide-scrollbar {
   -ms-overflow-style: none;
-  /* IE and Edge */
   scrollbar-width: none;
-  /* Firefox */
 }
 
 .active {
@@ -34,7 +32,6 @@ body {
   width: 320px;
   height: 308px;
 }
-
 
 
 @layer base {

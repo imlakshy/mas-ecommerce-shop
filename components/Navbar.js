@@ -1,18 +1,7 @@
 "use client"
 import * as React from "react"
-import { Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import Image from 'next/image'
 
 const Navbar = () => {
-  const { setTheme } = useTheme()
   return (
     <div class="bg-background lg:pb-12">
       <div class="mx-auto max-w-screen-2xl px-4 md:px-8">
