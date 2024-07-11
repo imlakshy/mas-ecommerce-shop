@@ -1,7 +1,6 @@
 import { Jost } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import { ThemeProvider } from "@/components/theme-provider";
 
 const jost = Jost({ subsets: ["latin"] });
 
@@ -14,14 +13,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={jost.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange>
-          <Navbar />
-          {children}
-          </ThemeProvider>
+        <Navbar />
+        {children}
       </body>
     </html>
   );

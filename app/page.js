@@ -1,8 +1,10 @@
 import Image from "next/image";
 import { Button, Input } from "@/components/ui/button";
+import Marquee from "react-fast-marquee";
 
 export default function Home() {
   return (<div className="flex flex-col items-center gap-10 px-5">
+
     <div className="Hero flex max-w-[1300px] justify-center gap-10">
       <div className="hidden lg:flex w-[392px] h-[756px] bg-[#e0e0e0] rounded-[10px] flex-col justify-end"><Image src={"/assets/Heros/h1.png"} width={426} height={150} alt="Image" /></div>
 
@@ -20,13 +22,17 @@ export default function Home() {
       <div className="hidden lg:flex w-[392px] h-[756px] bg-[#e0e0e0] rounded-[10px] flex-col justify-end items-center"><Image src={"/assets/Heros/h2.png"} width={300} height={250} alt="Image" /></div>
     </div>
 
-    <div className="logo xl:w-[1300px] flex justify-between items-center gap-10 lg:my-[100px] my-[50px] overflow-x-auto opacity-50">
-      <img src="/assets/Logos/1.png" alt="Logo 1" className="flex-shrink-0" />
-      <img src="/assets/Logos/2.png" alt="Logo 2" className="flex-shrink-0" />
-      <img src="/assets/Logos/3.png" alt="Logo 3" className="flex-shrink-0" />
-      <img src="/assets/Logos/4.png" alt="Logo 4" className="flex-shrink-0" />
-      <img src="/assets/Logos/5.png" alt="Logo 5" className="flex-shrink-0" />
+
+    <div className="logo w-[calc(100vw-40px)] xl:w-[1300px] flex justify-between items-center gap-10 lg:my-[100px] my-[50px] overflow-x-auto opacity-50">
+      <Marquee pauseOnHover speed={100}>
+        <img src="/assets/Logos/1.png" alt="Logo 1" className="flex-shrink-0 mr-16" />
+        <img src="/assets/Logos/2.png" alt="Logo 2" className="flex-shrink-0 mr-16" />
+        <img src="/assets/Logos/3.png" alt="Logo 3" className="flex-shrink-0 mr-16" />
+        <img src="/assets/Logos/4.png" alt="Logo 4" className="flex-shrink-0 mr-16" />
+        <img src="/assets/Logos/5.png" alt="Logo 5" className="flex-shrink-0 mr-16" />
+      </Marquee>
     </div>
+
 
     <div className="deals flex flex-col lg:flex-row items-center max-w-[1300px] gap-10">
       <div className="w-screen lg:w-[40%] px-5 lg:px-0">
@@ -45,20 +51,26 @@ export default function Home() {
             <h1 className="text-2xl">30% Off</h1>
           </div>
         </div>
-        <div className="h-[350px] w-auto aspect-[2/3]"><img className="w-full h-full object-cover object-top" src="https://i.postimg.cc/FKwNg3vS/2.png" alt="Deal 2" /></div>
-
-        <div className="h-[350px] w-auto aspect-[2/3]"><img className="w-full h-full object-cover object-top" src="https://i.postimg.cc/qvN4JdhL/image-2.png" alt="Deal 3" /></div>
 
         <div className="h-[350px] w-auto aspect-[2/3]"><img className="w-full h-full object-cover object-top" src="https://i.postimg.cc/FKwNg3vS/2.png" alt="Deal 2" /></div>
 
         <div className="h-[350px] w-auto aspect-[2/3]"><img className="w-full h-full object-cover object-top" src="https://i.postimg.cc/qvN4JdhL/image-2.png" alt="Deal 3" /></div>
 
-        <div className="inicators w-[100px] flex gap-2 absolute bottom-0 right-0">
+        <div className="h-[350px] w-auto aspect-[2/3]"><img className="w-full h-full object-cover object-top" src="https://i.postimg.cc/FKwNg3vS/2.png" alt="Deal 2" /></div>
+
+        <div className="h-[350px] w-auto aspect-[2/3]"><img className="w-full h-full object-cover object-top" src="https://i.postimg.cc/qvN4JdhL/image-2.png" alt="Deal 3" /></div>
+
+        <div className="INDICATORSforLargeDevice w-[100px] hidden md:flex gap-2 absolute bottom-2 right-2 ">
           <div className="cursor-pointer w-[10px] h-[10px] bg-[#b6b6b6] rounded-full active"></div>
           <div className="cursor-pointer w-[10px] h-[10px] bg-[#b6b6b6] rounded-full"></div>
           <div className="cursor-pointer w-[10px] h-[10px] bg-[#b6b6b6] rounded-full"></div>
           <div className="cursor-pointer w-[10px] h-[10px] bg-[#b6b6b6] rounded-full"></div>
         </div>
+
+        <div className="INDICATORforSmallDevice bg-white rounded-full flex md:hidden items-center justify-center gap-2 absolute bottom-2 right-2 w-10 h-10 drop-shadow-lg">
+          <img src="assets/SVG/next.svg" alt="next" className="w-[60%] h-[60%]" />
+        </div>
+
       </div>
     </div>
 
@@ -71,12 +83,12 @@ export default function Home() {
             <p class="mx-auto max-w-screen-md text-center md:text-lg text-gray-600">This is a section of some simple filler text, also known as placeholder text. It shares some characteristics of a real written text but is random or otherwise generated.</p>
           </div>
 
-          <div className="flex w-[90vw] lg:w-[1250px] justify-between items-center gap-10 mb-10 overflow-x-auto">
-            <div className="w-[207px] text-lg text-center rounded-lg p-2 cursor-pointer  text-gray-500">Men&apos;s Fashion</div>
-            <div className="w-[207px] text-lg text-center rounded-lg p-2 cursor-pointer text-white bg-primary">Women&apos;s Fashion</div>
-            <div className="w-[207px] text-lg text-center rounded-lg p-2 cursor-pointer text-gray-500">Women Accessories</div>
-            <div className="w-[207px] text-lg text-center rounded-lg p-2 cursor-pointer text-gray-500">Men Accessories</div>
-            <div className="w-[207px] text-lg text-center rounded-lg p-2 cursor-pointer text-gray-500">Discount Deals</div>
+          <div className="inline-flex w-[90vw] lg:w-[1250px] justify-between items-center gap-10 mb-10 overflow-x-auto whitespace-nowrap">
+            <div className="text-sm md:text-lg text-center rounded-lg p-2 md:px-4 cursor-pointer  text-gray-500">Men&apos;s Fashion</div>
+            <div className="text-sm md:text-lg text-center rounded-lg p-2 md:px-4 cursor-pointer text-white bg-primary">Women&apos;s Fashion</div>
+            <div className="text-sm md:text-lg text-center rounded-lg p-2 md:px-4 cursor-pointer text-gray-500">Women Accessories</div>
+            <div className="text-sm md:text-lg text-center rounded-lg p-2 md:px-4 cursor-pointer text-gray-500">Men Accessories</div>
+            <div className="text-sm md:text-lg text-center rounded-lg p-2 md:px-4 cursor-pointer text-gray-500">Discount Deals</div>
           </div>
 
           <div class="products grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -246,32 +258,32 @@ export default function Home() {
     </div>
 
     <div className="features flex w-screen md:w-[1300px] justify-around items-center flex-wrap gap-5 lg:mb-[100px] mb-[50px] overflow-x-auto">
-      <div className="featuresCard flex gap-5 w-[175px] md:w-[15vw] items-center justify-center">
-        <img src="https://i.postimg.cc/25bLxfL9/icon.png" alt="High Quality" className="w-[50px] h-[50px]" />
+      <div className="featuresCard flex gap-5 max-w-[140px] md:max-w-[15vw] items-center justify-center">
+        <img src="https://i.postimg.cc/25bLxfL9/icon.png" alt="High Quality" className="w-[30px] h-[30px] md:w-[50px] md:h-[50px]" />
         <div>
-          <h1 className="text-lg md:text-xl ">High Quality</h1>
-          <p className="text-gray-500 text-sm md:text-base">Crafted from top quality material</p>
+          <h1 className="text-sm md:text-xl ">High Quality</h1>
+          <p className="text-gray-500 text-xs md:text-base">Crafted from top quality material</p>
         </div>
       </div>
-      <div className="featuresCard flex gap-5  w-[175px] md:w-[15vw] items-center justify-center">
-        <img src="https://i.postimg.cc/DzhySJ3g/icon-1.png" alt="High Quality" className="w-[50px] h-[50px]" />
+      <div className="featuresCard flex gap-5  max-w-[140px] md:max-w-[15vw] items-center justify-center">
+        <img src="https://i.postimg.cc/DzhySJ3g/icon-1.png" alt="High Quality" className="w-[30px] h-[30px] md:w-[50px] md:h-[50px]" />
         <div>
-          <h1 className="text-lg md:text-xl ">Warranty Protection</h1>
-          <p className="text-gray-500 text-sm md:text-base">Over 2 years</p>
+          <h1 className="text-sm md:text-xl ">Warranty Protection</h1>
+          <p className="text-gray-500 text-xs md:text-base">Over 2 years</p>
         </div>
       </div>
-      <div className="featuresCard flex gap-5  w-[175px] md:w-[15vw] items-center justify-center">
-        <img src="https://i.postimg.cc/bwtWK3MC/Vector.png" alt="High Quality" className="w-[50px] h-[50px]" />
+      <div className="featuresCard flex gap-5  max-w-[140px] md:max-w-[15vw] items-center justify-center">
+        <img src="https://i.postimg.cc/bwtWK3MC/Vector.png" alt="High Quality" className="w-[30px] h-[30px] md:w-[50px] md:h-[50px]" />
         <div>
-          <h1 className="text-lg md:text-xl ">Free Shipping</h1>
-          <p className="text-gray-500 text-sm md:text-base">Order above ₹999</p>
+          <h1 className="text-sm md:text-xl ">Free Shipping</h1>
+          <p className="text-gray-500 text-xs md:text-base">Order above ₹999</p>
         </div>
       </div>
-      <div className="featuresCard flex gap-5  w-[175px] md:w-[15vw] items-center justify-center">
-        <img src="https://i.postimg.cc/Fs9jtRB2/2891214031638194523-1.png" alt="High Quality" className="w-[50px] h-[50px]" />
+      <div className="featuresCard flex gap-5  max-w-[140px] md:max-w-[15vw] items-center justify-center">
+        <img src="https://i.postimg.cc/Fs9jtRB2/2891214031638194523-1.png" alt="High Quality" className="w-[30px] h-[30px] md:w-[50px] md:h-[50px]" />
         <div>
-          <h1 className="text-lg md:text-xl ">24/7 Support</h1>
-          <p className="text-gray-500 text-sm md:text-base">Dedicated Support</p>
+          <h1 className="text-sm md:text-xl ">24/7 Support</h1>
+          <p className="text-gray-500 text-xs md:text-base">Dedicated Support</p>
         </div>
       </div>
     </div>
@@ -282,16 +294,18 @@ export default function Home() {
 
         <p class="mx-auto max-w-screen-md text-center md:text-lg text-gray-600">Lorem ipsum dolor sit amet consectetur adipisicing elit. Eos explicabo velit blanditiis a fuga debitis molestiae quia, nam facere hic.</p>
       </div>
-
+      {/* <Marquee pauseOnHover speed={100} play> */}
       <div className="instagramModels flex items-center mt-10 w-[calc(100vw-40px)] overflow-x-auto xl:overflow-x-hidden">
-        <img src="assets/models/3.png" alt="" />
-        <img src="assets/models/4.png" alt="" />
-        <img src="assets/models/5.png" alt="" />
-        <img src="assets/models/6.png" alt="" />
-        <img src="assets/models/7.png" alt="" />
-        <img src="assets/models/8.png" alt="" />
-        <img src="assets/models/9.png" alt="" />
+
+        <img src="assets/models/3.png" alt="Model" />
+        <img src="assets/models/4.png" alt="Model" />
+        <img src="assets/models/5.png" alt="Model" />
+        <img src="assets/models/6.png" alt="Model" />
+        <img src="assets/models/7.png" alt="Model" />
+        <img src="assets/models/8.png" alt="Model" />
+        <img src="assets/models/9.png" alt="Model" />
       </div>
+      {/* </Marquee> */}
 
 
     </div>
@@ -315,16 +329,16 @@ export default function Home() {
     </div>
 
     <div className="footer">
-      <div class="bg-white pt-4 sm:pt-10 lg:pt-12">
+      <div class="pt-4 sm:pt-10 lg:pt-12">
         <footer class="mx-auto max-w-screen-2xl px-4 md:px-8">
           <div class="flex flex-col items-center border-t pt-6">
 
             <nav class="mb-4 flex flex-wrap justify-center gap-x-4 gap-y-2 md:justify-start md:gap-6">
-              <a href="#" class="text-gray-500 transition duration-100 hover:text-indigo-500 active:text-indigo-600">About</a>
-              <a href="#" class="text-gray-500 transition duration-100 hover:text-indigo-500 active:text-indigo-600">Investor Relations</a>
-              <a href="#" class="text-gray-500 transition duration-100 hover:text-indigo-500 active:text-indigo-600">Jobs</a>
-              <a href="#" class="text-gray-500 transition duration-100 hover:text-indigo-500 active:text-indigo-600">Press</a>
-              <a href="#" class="text-gray-500 transition duration-100 hover:text-indigo-500 active:text-indigo-600">Blog</a>
+              <a href="#" class="text-gray-500 transition duration-100 hover:text-primary active:text-primary">About</a>
+              <a href="#" class="text-gray-500 transition duration-100 hover:text-primary active:text-primary">Investor Relations</a>
+              <a href="#" class="text-gray-500 transition duration-100 hover:text-primary active:text-primary">Jobs</a>
+              <a href="#" class="text-gray-500 transition duration-100 hover:text-primary active:text-primary">Press</a>
+              <a href="#" class="text-gray-500 transition duration-100 hover:text-primary active:text-primary">Blog</a>
             </nav>
 
 
