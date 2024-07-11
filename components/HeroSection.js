@@ -2,7 +2,7 @@ import React from 'react'
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Marquee from "react-fast-marquee";
-import ExploreGenderModal from './exploreGenderModal';
+import ExploreGenderModal from './ExploreGenderModal';
 import { useState } from 'react';
 
 const HeroSection = () => {
