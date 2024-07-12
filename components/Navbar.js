@@ -1,52 +1,32 @@
 "use client"
 import * as React from "react"
+import Link from "next/link"
+import { Button } from "./ui/button"
 
 const Navbar = () => {
-  return (
-    <div class="bg-background lg:pb-12">
-      <div class="mx-auto max-w-screen-2xl px-4 md:px-8">
-        <header class="flex items-center justify-between py-4 md:py-8">
+  return (<div className="mx-auto px-5 lg:px-8 lg:pb-16 flex justify-between lg:justify-around py-4 md:py-8 items-center">
+    <img src="https://i.postimg.cc/K8VFC1p5/M-s-1.png" alt="Más" className="w-[100px]" />
 
-          <a href="/" class="inline-flex items-center gap-2.5 text-2xl font-bold text-black md:text-3xl" aria-label="logo">
-            <img src="https://i.postimg.cc/K8VFC1p5/M-s-1.png" alt="Más" className="w-[100px]"/>
-          </a>
-
-
-
-          <nav class="hidden gap-12 lg:flex">
-            <a href="#" class="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary">Home</a>
-
-            <a href="#" class="inline-flex items-center gap-1 text-lg font-semibold hover:text-primary active:text-primary ">
-              Deals
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </a>
-
-            <a href="#" class="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary">New Arrivals</a>
-            <a href="#" class="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary">About</a>
-            <a href="#" class="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary">Help</a>
-          </nav>
-
-
-
-          <div class="-ml-8 hidden flex-col items-center gap-2.5 sm:flex-row sm:justify-center lg:flex lg:justify-start">
-            <a href="#" class="inline-block rounded-lg px-4 py-3 text-center text-sm font-semibold text-gray-500 outline-none  transition duration-100 hover:text-primary focus-visible:ring active:text-primary md:text-base">Sign in</a>
-
-            <a href="#" class="inline-block rounded-lg bg-primary px-8 py-3 text-center text-sm font-semibold text-primary-foreground outline-none  transition duration-100 hover:bg-primary focus-visible:ring active:bg-primary md:text-base">Sign up</a>
-          </div>
-
-          <button type="button" class="inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-semibold focus-visible:ring active:text-primary md:text-base lg:hidden">
-
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-            </svg>
-          </button>
-
-        </header>
-
-      </div>
+    <div className="hidden lg:flex gap-12">
+      <Link href={""} className="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary">Home</Link>
+      <Link href={""} className="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary">Deals</Link>
+      <Link href={""} className="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary">New Arrivals</Link>
+      <Link href={""} className="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary">Help</Link>
     </div>
+
+    <div className="hidden lg:flex gap-5 items-center">
+      <Link href={""} className="rounded-lg px-4 py-3 text-center text-sm font-semibold text-gray-500 outline-none  transition duration-100 hover:text-primary focus-visible:ring active:text-primary md:text-base">Sign In</Link>
+
+      <Button className="rounded-lg bg-primary px-8 py-6 text-center text-sm font-semibold text-primary-foreground outline-none  transition duration-100 hover:text-gray-700 focus-visible:ring active:bg-primary md:text-base">Sign Up</Button>
+    </div>
+
+    <button type="button" className="inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-semibold focus-visible:ring active:text-primary md:text-base lg:hidden">
+
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+        <path fille="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+      </svg>
+    </button>
+  </div>
   )
 }
 

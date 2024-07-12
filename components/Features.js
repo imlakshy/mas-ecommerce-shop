@@ -2,7 +2,7 @@ import React from 'react'
 
 const Features = () => {
     return (
-        <div className="features flex w-screen md:w-[1300px] justify-around items-center flex-wrap gap-5">
+        <div className="features flex w-screen lg:w-[1300px] justify-around items-center flex-wrap gap-5">
             <div className="featuresCard flex gap-5 max-w-[140px] md:max-w-[15vw] items-center justify-center">
                 <img src="https://i.postimg.cc/25bLxfL9/icon.png" alt="High Quality" className="w-[30px] h-[30px] md:w-[50px] md:h-[50px]" />
                 <div>
