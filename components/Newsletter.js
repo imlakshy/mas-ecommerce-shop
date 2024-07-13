@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 const Newsletter = () => {
     return (
-        <div className="newletter flex justify-around items-center">
+        <div className="newletter flex justify-around items-center mt-[24px]">
             <img src="assets\Newsletter\2.png" alt="" className="hidden lg:block" />
 
             <div className="flex flex-col items-center justify-center">

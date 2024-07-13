@@ -3,7 +3,7 @@ import Marquee from 'react-fast-marquee'
 
 const FollowInstagram = () => {
     return (
-        <div className="flex flex-col items-center text-center overflow-x-auto mt-[48px]">
+        <div className="flex flex-col items-center text-center overflow-x-auto mt-[24px]">
             <div className="mb-10 md:mb-16">
                 <h2 className="mb-4 text-center text-2xl font-bold md:mb-6 lg:text-3xl">Follow Us On Instagram</h2>
 
@@ -19,6 +19,7 @@ const FollowInstagram = () => {
                     <img src="assets/models/7.png" alt="Model" />
                     <img src="assets/models/8.png" alt="Model" />
                     <img src="assets/models/9.png" alt="Model" />
+                    <img src="assets/models/6.png" alt="Model" />
                 </Marquee>
             </div>
             <div className='lg:flex hidden'>
