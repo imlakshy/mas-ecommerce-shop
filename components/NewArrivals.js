@@ -20,7 +20,7 @@ const NewArrivals = () => {
     }
 
     return (
-        <div className="newArrival">
+        <div id='newArrivals' className="newArrival">
             <div className="py-6 sm:py-8 lg:py-12">
                 <div className="mx-auto xl:w-[1300px] flex flex-col items-center">
                     <div id='headings' className="mb-10 md:mb-16">

@@ -3,14 +3,21 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Marquee from "react-fast-marquee";
 import ExploreGenderModal from './ExploreGenderModal';
-import { useState } from 'react';
+import { useState, } from 'react';
 
 const HeroSection = () => {
 
-    const [showModal, setshowModal] = useState(false)
+    const [showModal, setshowModal] = useState(false);
+
+    const scrollToDeals = () => {
+        const element = document.getElementById('deals');
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
 
     return (
-        <div>
+        <div className='pt-[65px] lg:pt-[120px] py-2 md:pb-8'>
             <div className="Hero flex max-w-[1300px] justify-center gap-10 relative" >
                 {showModal ? (<ExploreGenderModal setshowModal={setshowModal} />) : ("")}
                 <div className="hidden lg:flex w-[392px] h-[756px] bg-[#e0e0e0] rounded-[10px] flex-col justify-end"><img src={"/assets/Heros/h1.png"} width={426} height={150} alt="Image" /></div>
@@ -21,7 +28,7 @@ const HeroSection = () => {
                     <div className="flex flex-col justify-between items-center">
                         <img src={"/assets/Heros/sale.png"} width={426} height={150} alt="Image" />
 
-                        <a href="#deals"><Button className="w-[207px] mt-3 lg:mt-6 mb-4">SHOP NOW</Button></a>
+                        <Button className="w-[207px] mt-3 lg:mt-6 mb-4" onClick={scrollToDeals}>SHOP NOW</Button>
                     </div>
 
                     <Image src={"/assets/Heros/v2.png"} width={426} height={150} alt="Image" />

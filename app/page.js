@@ -11,7 +11,7 @@ export default function Home() {
 
     <HeroSection />
 
-    <div id="deals" className="flex pt-[50px] flex-col lg:flex-row items-center max-w-[1300px] gap-10">
+    <div id="deals" className="flex pt-[20px] md:pt-[50px] flex-col lg:flex-row items-center max-w-[1300px] gap-10">
       <div className="w-screen lg:w-[40%] px-5 lg:px-0">
         <h1 className="text-4xl font-bold">Deals Of The Month</h1>
         <p className="my-10 text-gray-600">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptatum magni saepe dolores ipsam mollitia tempore ducimus molestiae corrupti error veniam?</p>
