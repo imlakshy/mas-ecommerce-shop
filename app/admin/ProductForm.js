@@ -12,7 +12,7 @@ const ProductForm = () => {
     const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
     const [rate, setRate] = useState("");
-    const [discount, setDiscount] = useState("");n
+    const [discount, setDiscount] = useState("");
     const [price, setPrice] = useState("");
     const [imgUrl, setImgUrl] = useState([]);
     const [uuid, setUuid] = useState(180720240001);
