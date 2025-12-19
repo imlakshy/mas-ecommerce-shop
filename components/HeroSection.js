@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Marquee from "react-fast-marquee";
 import ExploreGenderModal from './ExploreGenderModal';
-import { useState, } from 'react';
+import { useState } from 'react';
 
 const HeroSection = () => {
 
@@ -18,7 +18,7 @@ const HeroSection = () => {
 
     return (
         <div className='pt-[65px] lg:pt-[120px] py-2 md:pb-8'>
-            <div className="Hero flex max-w-[1300px] justify-center gap-10 relative" >
+            <div className="Hero flex  max-w-[1300px] justify-center gap-10 relative" >
                 {showModal ? (<ExploreGenderModal setshowModal={setshowModal} />) : ("")}
                 <div className="hidden lg:flex w-[392px] h-[756px] bg-[#e0e0e0] rounded-[10px] flex-col justify-end"><img src={"/assets/Heros/h1.png"} width={426} height={150} alt="Image" /></div>
 

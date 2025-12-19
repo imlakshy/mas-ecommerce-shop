@@ -1,0 +1,32 @@
+[
+  {
+    "name": "jhdjhbe",
+    "desc": "wefwef",
+    "rate": 2500,
+    "discount": 10,
+    "units": 5,
+    "gender": "Men",
+    "category": "4",
+    "brand": "efewf",
+    "price": 2250,
+    "uuid": 180720240001,
+    "imgUrl": [
+      "wefewf"
+    ]
+  },
+  {
+    "name": "efewfew",
+    "desc": "fewfwe",
+    "rate": 2500,
+    "discount": 90,
+    "units": 5,
+    "gender": "Men",
+    "category": "tshirt",
+    "brand": "7ui",
+    "price": 250,
+    "uuid": 180720240002,
+    "imgUrl": [
+      "8i"
+    ]
+  }
+]

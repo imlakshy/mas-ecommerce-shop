@@ -36,7 +36,7 @@ const Navbar = () => {
           <img src="https://i.postimg.cc/K8VFC1p5/M-s-1.png" alt="Más" className="w-[100px]" />
         </div>
 
-        <div className="hidden lg:flex grow gap-12 justify-center items-center">
+        <div className="hidden lg:flex grow gap-12 justify-center items-center"> 
           <Link href={""} className="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary">Home</Link>
           <Link href={""} className="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary" onClick={() => document.getElementById('deals')?.scrollIntoView({ behavior: 'smooth' })}>Deals</Link>
           <Link href={""} className="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary" onClick={() => document.getElementById('newArrivals')?.scrollIntoView({ behavior: 'smooth' })}>New Arrivals</Link>

@@ -5,10 +5,12 @@ import FollowInstagram from "@/components/FollowInstagram";
 import Features from "@/components/Features";
 import HeroSection from "@/components/HeroSection";
 import NewArrivals from "@/components/NewArrivals";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   return (<div className="flex flex-col items-center gap-10 px-5">
-
+    <Navbar />
     <HeroSection />
 
     <div id="deals" className="flex pt-[20px] md:pt-[50px] flex-col lg:flex-row items-center max-w-[1300px] gap-10">
@@ -51,14 +53,16 @@ export default function Home() {
       </div>
     </div>
 
-    
-    <NewArrivals/>
+
+    <NewArrivals />
 
     <Features />
 
     <FollowInstagram />
 
     <Newsletter />
+
+    <Footer />
 
   </div>
   );
