@@ -2,7 +2,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { User, Heart, LucideShoppingBag } from "lucide-react"
+import { User, Heart, LucideShoppingBag, UserCircle, Package, LogOut } from "lucide-react"
 
 const Navbar = () => {
 
@@ -10,6 +10,7 @@ const Navbar = () => {
 
   const [showNavbar, setShowNavbar] = React.useState(true);
   const [lastScrollTop, setLastScrollTop] = React.useState(0);
+  const [showUserMenu, setShowUserMenu] = React.useState(false);
 
   // Function to handle scroll events
   const handleScroll = () => {
@@ -30,6 +31,18 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollTop]);
 
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserMenu && !event.target.closest('.user-menu-container')) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserMenu]);
+
   return (
     <div
       className={`fixed top-0 left-0 w-full z-50 transition-transform duration-300 ${showNavbar ? 'translate-y-0' : '-translate-y-full'} bg-white pt-3`}
@@ -40,25 +53,112 @@ const Navbar = () => {
           <img src="https://i.postimg.cc/K8VFC1p5/M-s-1.png" alt="Más" className="w-[100px]" />
         </div>
 
-        <div className="hidden lg:flex grow gap-12 justify-center items-center"> 
+        <div className="hidden lg:flex grow gap-12 justify-center items-center">
           <Link href={""} className="text-lg font-semibold transition duration-100  hover:text-primary active:text-primary">Home</Link>
+
           <Link href={""} className="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary" onClick={() => document.getElementById('deals')?.scrollIntoView({ behavior: 'smooth' })}>Deals</Link>
+
           <Link href={""} className="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary" onClick={() => document.getElementById('newArrivals')?.scrollIntoView({ behavior: 'smooth' })}>New Arrivals</Link>
+
           <Link href={""} className="text-lg font-semibold transition duration-100 hover:text-primary active:text-primary">Help</Link>
         </div>
 
         <div className="hidden lg:flex flex-1 gap-5 items-center justify-end">
           {/* <Button className="rounded-lg bg-primary px-8 py-6 text-center text-sm font-semibold text-primary-foreground outline-none  transition duration-100 focus-visible:ring active:bg-primary md:text-base" onClick={() => router.push('/auth')}>Sign Up</Button> */}
-          <Heart className="cursor-pointer hover:text-primary" size={20} />
+          <Heart className="cursor-pointer hover:text-primary" size={20} onClick={() => router.push('/wishlist')} />
+            
           <LucideShoppingBag className="cursor-pointer hover:text-primary" size={20} onClick={() => router.push('/cart')} />
-          <User className="cursor-pointer hover:text-primary" size={20} onClick={() => router.push('/auth')} />
+
+          <div className="relative user-menu-container">
+            <User
+              className="cursor-pointer hover:text-primary"
+              size={20}
+              onClick={() => setShowUserMenu(!showUserMenu)}
+            />
+            {showUserMenu && (
+              <div className="absolute right-0 top-full mt-3 w-52 bg-white shadow-xl z-50 rounded-sm">
+                <button
+                  onClick={() => {
+                    router.push('/account');
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
+                >
+                  <UserCircle className="w-5 h-5 stroke-[1.5]" />
+                  My Account
+                </button>
+                <button
+                  onClick={() => {
+                    router.push('/orders');
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
+                >
+                  <Package className="w-5 h-5 stroke-[1.5]" />
+                  Orders
+                </button>
+                <button
+                  onClick={() => {
+                    // Handle logout logic here
+                    router.push('/auth');
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
+                >
+                  <LogOut className="w-5 h-5 stroke-[1.5]" />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        <button type="button" className="inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-semibold focus-visible:ring active:text-primary md:text-base lg:hidden">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-          </svg>
-        </button>
+        <div className="flex gap-3 items-center lg:hidden">
+          <Heart className="cursor-pointer hover:text-primary" size={20} />
+          <LucideShoppingBag className="cursor-pointer hover:text-primary" size={20} onClick={() => router.push('/cart')} />
+          <div className="relative user-menu-container">
+            <User
+              className="cursor-pointer hover:text-primary"
+              size={20}
+              onClick={() => setShowUserMenu(!showUserMenu)}
+            />
+            {showUserMenu && (
+              <div className="absolute right-0 top-full mt-3 w-52 bg-white shadow-xl z-50 rounded-sm">
+                <button
+                  onClick={() => {
+                    router.push('/account');
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
+                >
+                  <UserCircle className="w-5 h-5 stroke-[1.5]" />
+                  My Account
+                </button>
+                <button
+                  onClick={() => {
+                    router.push('/orders');
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
+                >
+                  <Package className="w-5 h-5 stroke-[1.5]" />
+                  Orders
+                </button>
+                <button
+                  onClick={() => {
+                    // Handle logout logic here
+                    router.push('/auth');
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
+                >
+                  <LogOut className="w-5 h-5 stroke-[1.5]" />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
