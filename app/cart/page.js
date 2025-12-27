@@ -16,9 +16,9 @@ const CartPage = () => {
         </div>
       </div>
 
-      <div className='flex flex-col max-h-full md:flex-row gap-6 lg:gap-20 flex-1'>
+      <div className='flex flex-col max-h-full md:flex-row gap-6 overflow-auto lg:gap-20 flex-1'>
         {/* Cart Items */}
-        <div className='w-full md:w-3/4 py-1 md:py-2 lg:py-4 overflow-auto'>
+        <div className='w-full md:w-3/4 py-1 md:py-2 lg:py-4 md:overflow-auto'>
           {/* Item 1 */}
           <div className='border-b py-6 flex items-center min-w-[350px]'>
             <div className='h-24 md:h-36 lg:h-48 w-24 md:w-36 lg:w-48 mr-4 relative'>
@@ -38,7 +38,7 @@ const CartPage = () => {
 
               <div className='flex items-center pt-1 md:pt-2 lg:pt-4'>
                 <label htmlFor="quantity" className='text-gray-600 font-light text-xs'>Qty:</label>
-                <select name="quantity" id="quantity" className='w-7 text-xs scale-70'>
+                <select name="quantity" id="quantity" className='bg-transparent w-7 text-xs scale-70'>
                   <option value="1">1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>
@@ -114,7 +114,7 @@ const CartPage = () => {
         </div>
 
         {/* Order Summary */}
-        <div className='w-full md:w-1/4 min-w-[350px] md:min-w-[270px]'>
+        <div className='w-full md:w-1/4 min-w-[330px] md:min-w-[270px]'>
 
           <div className='flex flex-col  border-black h-max'>
             <span className='text-lg sm:text-2xl font-light pb-2 md:pb-4 lg:pb-8'>Order Summary</span>

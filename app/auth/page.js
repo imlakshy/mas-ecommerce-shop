@@ -44,7 +44,7 @@ const AuthPage = () => {
                     <button className="cursor-pointer hover:bg-gray-200 border-2 p-2 border-black hover:border-gray-200 font-light transition-all duration-300" onClick={() => setIsNewUser(false)}>Log in</button>
                 </div>)
                 :
-                (<div className='w-2/6 p-4 flex flex-col gap-1 md:p-6 lg:p-8'>
+                (<div className='w-full min-w-[320px] sm:w-1/3 p-4 flex flex-col gap-1 md:p-6 lg:p-8'>
                     <span className='text-4xl font-semibold leading-tight py-16'>Hey!<br />welcome back</span>
 
                     <div className="flex flex-col gap-8 ">
