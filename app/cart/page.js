@@ -32,7 +32,7 @@ const CartPage = () => {
             <div className='flex flex-col justify-center flex-1 relative'>
               <span className='text-sm text-gray-700'>Zara</span>
               <span className='line-clamp-1'>Loose fit zip through hoodie</span>
-              <span className='font-light text-gray-500 pb-1 mb:pb-2 lg:pb-4 text-sm'>Sold by: Zara India</span>
+              <span className='font-light text-gray-500 pb-1 mb:pb-2 lg:pb-4 text-sm hidden md:block'>Sold by: Zara India</span>
               <span className='text-gray-600 font-light text-xs'>Color: Black</span>
               <span className='text-gray-600 font-light text-xs'>Size: L</span>
 
