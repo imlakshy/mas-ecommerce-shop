@@ -1,13 +1,23 @@
+"use client"
 import React from 'react'
 import Image from 'next/image'
-import { X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 const CartPage = () => {
-  return (
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  return (<div className={`transition-all duration-500 ease-out
+    ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+
     <div className='px-4 sm:px-6 md:px-10 lg:px-20 pb-2 flex flex-col h-screen'>
       {/* Navbar */}
       <div className='py-4'>
-        <div className="flex justify-center">
+        <div className="flex justify-center cursor-pointer" onClick={() => router.push('/')}>
           <img src="https://i.postimg.cc/K8VFC1p5/M-s-1.png" alt="Más" className="w-[100px]" />
         </div>
 
@@ -31,8 +41,8 @@ const CartPage = () => {
             </div>
             <div className='flex flex-col justify-center flex-1 relative'>
               <span className='text-sm text-gray-700'>Zara</span>
-              <span className='line-clamp-1'>Loose fit zip through hoodie</span>
-              <span className='font-light text-gray-500 pb-1 mb:pb-2 lg:pb-4 text-sm hidden md:block'>Sold by: Zara India</span>
+              <span className='line-clamp-1 pb-2 lg:pb-4'>Loose fit zip through hoodie</span>
+
               <span className='text-gray-600 font-light text-xs'>Color: Black</span>
               <span className='text-gray-600 font-light text-xs'>Size: L</span>
 
@@ -105,10 +115,10 @@ const CartPage = () => {
 
             </div>
           </div>
-          
+
 
           <div className='pt-8 pb-4'>
-            <span className='text-3xl font-bold'>Nothing else here</span><br/>
+            <span className='text-3xl font-bold'>Nothing else here</span><br />
             <span className='text-gray-500'>Find something special to add...</span>
           </div>
         </div>
@@ -150,7 +160,7 @@ const CartPage = () => {
         </div>
       </div>
     </div >
-  )
+  </div>)
 }
 
 export default CartPage
