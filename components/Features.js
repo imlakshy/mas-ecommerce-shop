@@ -13,8 +13,8 @@ const Features = () => {
             <div className="featuresCard flex gap-5  max-w-[140px] md:max-w-[15vw] items-center justify-center">
                 <img src="https://i.postimg.cc/DzhySJ3g/icon-1.png" alt="High Quality" className="w-[30px] h-[30px] md:w-[50px] md:h-[50px]" />
                 <div>
-                    <h1 className="text-sm md:text-xl ">Warranty Protection</h1>
-                    <p className="text-gray-500 text-xs md:text-base">Over 2 years</p>
+                    <h1 className="text-sm md:text-xl ">Authenticity Guaranteed</h1>
+                    <p className="text-gray-500 text-xs md:text-base">100% original designs</p>
                 </div>
             </div>
             <div className="featuresCard flex gap-5  max-w-[140px] md:max-w-[15vw] items-center justify-center">
