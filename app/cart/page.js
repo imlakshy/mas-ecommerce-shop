@@ -7,10 +7,95 @@ import { useState, useEffect } from 'react'
 const CartPage = () => {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showAddAddressModal, setShowAddAddressModal] = useState(false);
+  const [showEditAddressModal, setShowEditAddressModal] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState({
+    id: 1,
+    name: 'John Doe',
+    address: '123 Main Street, City',
+    zip: '123456',
+    phone: '+91 9876543210'
+  });
+  const [tempSelectedAddress, setTempSelectedAddress] = useState(null);
+  const [addresses, setAddresses] = useState([
+    {
+      id: 1,
+      name: 'John Doe',
+      address: '123 Main Street, City',
+      zip: '123456',
+      phone: '+91 9876543210'
+    },
+    {
+      id: 2,
+      name: 'Jane Smith',
+      address: '456 Park Avenue, Downtown',
+      zip: '789012',
+      phone: '+91 9876543211'
+    }
+  ]);
+  const [newAddress, setNewAddress] = useState({
+    name: '',
+    address: '',
+    zip: '',
+    phone: ''
+  });
+  const [editingAddress, setEditingAddress] = useState(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
-  
+
+  useEffect(() => {
+    // Initialize temp selected address when modal opens
+    if (showAddressModal) {
+      setTempSelectedAddress(selectedAddress);
+    }
+  }, [showAddressModal, selectedAddress]);
+
+  const handleAddressSelect = (address) => {
+    setTempSelectedAddress(address);
+  };
+
+  const handleConfirmAddress = () => {
+    if (tempSelectedAddress) {
+      setSelectedAddress(tempSelectedAddress);
+    }
+    setShowAddressModal(false);
+  };
+
+  const handleAddNewAddress = () => {
+    if (newAddress.name && newAddress.address && newAddress.zip && newAddress.phone) {
+      const newId = Math.max(...addresses.map(a => a.id)) + 1;
+      const addressToAdd = {
+        id: newId,
+        ...newAddress
+      };
+      setAddresses([...addresses, addressToAdd]);
+      setTempSelectedAddress(addressToAdd);
+      setNewAddress({ name: '', address: '', zip: '', phone: '' });
+      setShowAddAddressModal(false);
+    }
+  };
+
+  const handleEditAddress = () => {
+    if (tempSelectedAddress) {
+      setEditingAddress({ ...tempSelectedAddress });
+      setShowEditAddressModal(true);
+    }
+  };
+
+  const handleSaveEditedAddress = () => {
+    if (editingAddress && editingAddress.name && editingAddress.address && editingAddress.zip && editingAddress.phone) {
+      setAddresses(addresses.map(addr =>
+        addr.id === editingAddress.id ? editingAddress : addr
+      ));
+      setTempSelectedAddress(editingAddress);
+      setEditingAddress(null);
+      setShowEditAddressModal(false);
+    }
+  };
+
   return (<div className={`transition-all duration-500 ease-out
     ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
 
@@ -123,11 +208,29 @@ const CartPage = () => {
           </div>
         </div>
 
-        {/* Order Summary */}
-        <div className='w-full md:w-1/4 min-w-[330px] md:min-w-[270px]'>
+        {/* Customer Information & Order Summary */}
+        <div className='w-full md:w-1/4 min-w-[330px] md:min-w-[270px] flex flex-col'>
+          {/* Customer Information */}
+          <div className='flex flex-col border-black h-max'>
+            <span className='text-lg sm:text-2xl font-light pb-2'>Customer Information</span>
 
-          <div className='flex flex-col  border-black h-max'>
-            <span className='text-lg sm:text-2xl font-light pb-2 md:pb-4 lg:pb-8'>Order Summary</span>
+            <div className='flex flex-col gap-2 text-xs'>
+              <div className='text-sm font-semibold'>{selectedAddress.name}</div>
+              <div>{selectedAddress.address}</div>
+              <div>{selectedAddress.zip}</div>
+              <div className='text-sm'>{selectedAddress.phone}</div>
+              <span
+                className='text-xs text-gray-600 underline cursor-pointer hover:text-black pt-1'
+                onClick={() => setShowAddressModal(true)}
+              >
+                Change Address
+              </span>
+            </div>
+          </div>
+
+          {/* Order Summary */}
+          <div className='flex flex-col border-black h-max'>
+            <span className='text-lg sm:text-2xl font-light pt-6 pb-2'>Order Summary</span>
 
             <div className='flex flex-col gap-2'>
               <span className='font-semibold pb-1 md:pb-2 lg:pb-4 underline underline-offset-4 text-xs md:text-sm lg:text-base'>2 Item(s)</span>
@@ -159,6 +262,268 @@ const CartPage = () => {
 
         </div>
       </div>
+
+      {/* Address Selection Modal */}
+      {showAddressModal && (
+        <div
+          className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
+          onClick={() => setShowAddressModal(false)}
+        >
+          <div
+            className='bg-white p-6 md:p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className='flex justify-between items-center mb-4'>
+              <span className='text-xl font-light'>Select Address</span>
+              <span
+                className='text-2xl cursor-pointer hover:text-gray-600'
+                onClick={() => setShowAddressModal(false)}
+              >
+                ×
+              </span>
+            </div>
+
+            <div className='flex flex-col gap-4 mb-4'>
+              {addresses.map((address) => (
+                <div
+                  key={address.id}
+                  className={`border-2 p-4 cursor-pointer transition-all ${tempSelectedAddress?.id === address.id
+                    ? 'border-black bg-gray-50'
+                    : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  onClick={() => handleAddressSelect(address)}
+                >
+                  <div className='flex items-start gap-3'>
+                    <input
+                      type='radio'
+                      name='address'
+                      checked={tempSelectedAddress?.id === address.id}
+                      onChange={() => handleAddressSelect(address)}
+                      className='mt-1'
+                    />
+                    <div className='flex flex-col gap-1 text-sm flex-1'>
+                      <div className='font-semibold'>{address.name}</div>
+                      <div className='text-gray-600'>{address.address}</div>
+                      <div className='text-gray-600'>{address.zip}</div>
+                      <div className='text-gray-600'>{address.phone}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div
+              className='border-2 border-dashed border-gray-300 p-4 cursor-pointer hover:border-black hover:bg-gray-50 transition-all text-center'
+              onClick={() => setShowAddAddressModal(true)}
+            >
+              <span className='text-sm font-light'>+ Add New Address</span>
+            </div>
+
+            <div className='mt-6 flex gap-3'>
+              <button
+                onClick={handleEditAddress}
+                disabled={!tempSelectedAddress}
+                className={`flex-1 border-2 border-black p-2 text-sm font-light hover:bg-gray-100 ${!tempSelectedAddress ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleConfirmAddress}
+                className='flex-1 bg-black text-white p-2 text-sm font-light hover:bg-gray-800'
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Address Modal */}
+      {showAddAddressModal && (
+        <div
+          className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
+          onClick={() => {
+            setShowAddAddressModal(false);
+            setNewAddress({ name: '', address: '', zip: '', phone: '' });
+          }}
+        >
+          <div
+            className='bg-white p-6 md:p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className='flex justify-between items-center mb-4'>
+              <span className='text-xl font-light'>Add New Address</span>
+              <span
+                className='text-2xl cursor-pointer hover:text-gray-600'
+                onClick={() => {
+                  setShowAddAddressModal(false);
+                  setNewAddress({ name: '', address: '', zip: '', phone: '' });
+                }}
+              >
+                ×
+              </span>
+            </div>
+
+            <div className='flex flex-col gap-4'>
+              <div className='flex flex-col gap-2'>
+                <label className='text-sm font-light'>Full Name</label>
+                <input
+                  type='text'
+                  value={newAddress.name}
+                  onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
+                  className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
+                  placeholder='Enter full name'
+                />
+              </div>
+
+              <div className='flex flex-col gap-2'>
+                <label className='text-sm font-light'>Address</label>
+                <input
+                  type='text'
+                  value={newAddress.address}
+                  onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
+                  className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
+                  placeholder='Enter street address'
+                />
+              </div>
+
+              <div className='flex flex-col gap-2'>
+                <label className='text-sm font-light'>ZIP Code</label>
+                <input
+                  type='text'
+                  value={newAddress.zip}
+                  onChange={(e) => setNewAddress({ ...newAddress, zip: e.target.value })}
+                  className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
+                  placeholder='Enter ZIP code'
+                />
+              </div>
+
+              <div className='flex flex-col gap-2'>
+                <label className='text-sm font-light'>Phone Number</label>
+                <input
+                  type='text'
+                  value={newAddress.phone}
+                  onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
+                  className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
+                  placeholder='Enter phone number'
+                />
+              </div>
+            </div>
+
+            <div className='mt-6 flex gap-3'>
+              <button
+                onClick={() => {
+                  setShowAddAddressModal(false);
+                  setNewAddress({ name: '', address: '', zip: '', phone: '' });
+                }}
+                className='flex-1 border-2 border-black p-2 text-sm font-light hover:bg-gray-100'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddNewAddress}
+                className='flex-1 bg-black text-white p-2 text-sm font-light hover:bg-gray-800'
+              >
+                Add Address
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Address Modal */}
+      {showEditAddressModal && editingAddress && (
+        <div
+          className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
+          onClick={() => {
+            setShowEditAddressModal(false);
+            setEditingAddress(null);
+          }}
+        >
+          <div
+            className='bg-white p-6 md:p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className='flex justify-between items-center mb-4'>
+              <span className='text-xl font-light'>Edit Address</span>
+              <span
+                className='text-2xl cursor-pointer hover:text-gray-600'
+                onClick={() => {
+                  setShowEditAddressModal(false);
+                  setEditingAddress(null);
+                }}
+              >
+                ×
+              </span>
+            </div>
+
+            <div className='flex flex-col gap-4'>
+              <div className='flex flex-col gap-2'>
+                <label className='text-sm font-light'>Full Name</label>
+                <input
+                  type='text'
+                  value={editingAddress.name}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, name: e.target.value })}
+                  className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
+                  placeholder='Enter full name'
+                />
+              </div>
+
+              <div className='flex flex-col gap-2'>
+                <label className='text-sm font-light'>Address</label>
+                <input
+                  type='text'
+                  value={editingAddress.address}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, address: e.target.value })}
+                  className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
+                  placeholder='Enter street address'
+                />
+              </div>
+
+              <div className='flex flex-col gap-2'>
+                <label className='text-sm font-light'>ZIP Code</label>
+                <input
+                  type='text'
+                  value={editingAddress.zip}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, zip: e.target.value })}
+                  className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
+                  placeholder='Enter ZIP code'
+                />
+              </div>
+
+              <div className='flex flex-col gap-2'>
+                <label className='text-sm font-light'>Phone Number</label>
+                <input
+                  type='text'
+                  value={editingAddress.phone}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, phone: e.target.value })}
+                  className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
+                  placeholder='Enter phone number'
+                />
+              </div>
+            </div>
+
+            <div className='mt-6 flex gap-3'>
+              <button
+                onClick={() => {
+                  setShowEditAddressModal(false);
+                  setEditingAddress(null);
+                }}
+                className='flex-1 border-2 border-black p-2 text-sm font-light hover:bg-gray-100'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEditedAddress}
+                className='flex-1 bg-black text-white p-2 text-sm font-light hover:bg-gray-800'
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div >
   </div>)
 }
