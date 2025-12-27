@@ -52,7 +52,50 @@ const CartPage = () => {
                 |
                 <span className='cursor-pointer hover:text-black'>Remove</span>
                 |
-                <span className='cursor-pointer hover:text-black'>Save for later</span>
+                <span className='cursor-pointer hover:text-black'>Move to wishlist</span>
+              </div>
+
+              <div className='flex flex-col absolute right-2 items-end'>
+                <span className='text-gray-400 line-through text-xs text-extralight'>₹5,499</span>
+                <span className=''>₹3,999</span>
+              </div>
+
+            </div>
+          </div>
+          {/* Item 1 */}
+          <div className='border-b py-6 flex items-center min-w-[350px]'>
+            <div className='h-24 md:h-36 lg:h-48 w-24 md:w-36 lg:w-48 mr-4 relative'>
+              <Image
+                src="/hoodie.avif"
+                alt="Product Image"
+                fill
+                className='object-cover'
+              />
+            </div>
+            <div className='flex flex-col justify-center flex-1 relative'>
+              <span className='text-sm text-gray-700'>Zara</span>
+              <span className='line-clamp-1'>Loose fit zip through hoodie</span>
+              <span className='font-light text-gray-500 pb-1 mb:pb-2 lg:pb-4 text-sm'>Sold by: Zara India</span>
+              <span className='text-gray-600 font-light text-xs'>Color: Black</span>
+              <span className='text-gray-600 font-light text-xs'>Size: L</span>
+
+              <div className='flex items-center pt-1 md:pt-2 lg:pt-4'>
+                <label htmlFor="quantity" className='text-gray-600 font-light text-xs'>Qty:</label>
+                <select name="quantity" id="quantity" className='w-7 text-xs scale-70'>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                </select>
+              </div>
+
+              <div className='pt-2 md:pt-3 lg:pt-6 flex gap-2 text-xs font-semibold text-gray-500'>
+                <span className='cursor-pointer hover:text-black'>Edit</span>
+                |
+                <span className='cursor-pointer hover:text-black'>Remove</span>
+                |
+                <span className='cursor-pointer hover:text-black'>Move to wishlist</span>
               </div>
 
               <div className='flex flex-col absolute right-2 items-end'>
@@ -71,9 +114,9 @@ const CartPage = () => {
         </div>
 
         {/* Order Summary */}
-        <div className='w-full md:w-1/4 min-w-[350px] md:min-w-[270px] px-4'>
+        <div className='w-full md:w-1/4 min-w-[350px] md:min-w-[270px]'>
 
-          <div className='flex flex-col  border-primary h-max'>
+          <div className='flex flex-col  border-black h-max'>
             <span className='text-lg sm:text-2xl font-light pb-2 md:pb-4 lg:pb-8'>Order Summary</span>
 
             <div className='flex flex-col gap-2'>
@@ -82,7 +125,7 @@ const CartPage = () => {
               <div className='flex justify-between text-sm'><span>Total MRP</span> <span>₹14,499</span></div>
               <div className='flex justify-between text-sm'><span>Discount on MRP</span> <span className='text-primary'>-₹4,350</span></div>
 
-              <input type="text" id='discountCoupon' placeholder='Add a coupon' className='border border-primary text-primary p-2 text-sm' />
+              <input type="text" id='discountCoupon' placeholder='Add a coupon' className='border border-black text-primary p-2 text-sm' />
 
               <div className='flex justify-between text-sm'><span>Coupon Discount</span> <span className='text-primary'>-₹2,030</span></div>
 
@@ -101,8 +144,8 @@ const CartPage = () => {
             </div>
           </div>
 
-          <div className='w-full mt-2 bg-primary text-white p-2 text-center text-sm cursor-pointer font-light'>Checkout</div>
-          <div className='w-full mt-2 border-2 border-primary p-2 text-center text-sm cursor-pointer font-light'>Add from wishlist</div>
+          <div className='w-full mt-2 bg-black text-white hover:bg-gray-800 p-2 text-center text-sm cursor-pointer font-light'>Checkout</div>
+          <div className='w-full mt-2 border-2 border-black p-2 text-center text-sm cursor-pointer font-light hover:bg-gray-100'>Add from wishlist</div>
 
         </div>
       </div>
