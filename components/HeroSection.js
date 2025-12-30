@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import Marquee from "react-fast-marquee";
 import ExploreGenderModal from './ExploreGenderModal';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const HeroSection = () => {
 
     const [showModal, setshowModal] = useState(false);
+
+    const router = useRouter();
 
     const scrollToDeals = () => {
         const element = document.getElementById('deals');
@@ -28,7 +31,7 @@ const HeroSection = () => {
                     <div className="flex flex-col justify-between items-center">
                         <img src={"/assets/Heros/sale.png"} width={426} height={150} alt="Image" />
 
-                        <Button className="w-[207px] mt-3 lg:mt-6 mb-4" onClick={scrollToDeals}>SHOP NOW</Button>
+                        <Button className="w-[207px] mt-3 lg:mt-6 mb-4" onClick={() => router.push('/products')}>SHOP NOW</Button>
                     </div>
 
                     <Image src={"/assets/Heros/v2.png"} width={426} height={150} alt="Image" />
