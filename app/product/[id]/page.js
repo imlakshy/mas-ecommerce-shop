@@ -172,21 +172,27 @@ const ProductDetailPage = () => {
                             </div>
 
                             {/* Thumbnail Images */}
-                            <div className="flex gap-3 overflow-x-auto hide-scrollbar">
-                                {product?.images.map((image, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => setSelectedImage(index)}
-                                        className={` aspect-[2/3] relative flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index ? 'border-primary' : 'border-gray-200'}`}>
-                                        <Image
-                                            src={image}
-                                            alt={`${product?.name} view ${index + 1}`}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    </button>
-                                ))}
+                            <div className="max-w-[450px] overflow-x-auto hide-scrollbar">
+                                <div className="flex gap-3">
+                                    {product?.images.map((image, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setSelectedImage(index)}
+                                            className={`relative flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 transition-all
+          ${selectedImage === index ? 'border-primary' : 'border-gray-200'}
+        `}
+                                        >
+                                            <Image
+                                                src={image}
+                                                alt={`${product?.name} view ${index + 1}`}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
+
                         </div>
 
                         {/* Product Details */}
