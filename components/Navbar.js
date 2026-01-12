@@ -3,16 +3,20 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { User, Heart, LucideShoppingBag, UserCircle, Package, LogOut } from "lucide-react"
+import { supabase } from "@/lib/createSupabaseClient"
+import { useAuth } from "@/context/AuthContext"
+import { Button } from "./ui/button"
+import { toast } from "sonner"
 
 const Navbar = () => {
-
-  const router = useRouter();
 
   const [showNavbar, setShowNavbar] = React.useState(true);
   const [lastScrollTop, setLastScrollTop] = React.useState(0);
   const [showUserMenu, setShowUserMenu] = React.useState(false);
+  const router = useRouter();
 
-  // Function to handle scroll events
+  const { user } = useAuth();
+
   const handleScroll = () => {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     if (scrollTop > lastScrollTop) {
@@ -25,13 +29,11 @@ const Navbar = () => {
     setLastScrollTop(scrollTop <= 0 ? 0 : scrollTop); // For Mobile or negative scrolling
   };
 
-  // Set up scroll event listener
   React.useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollTop]);
 
-  // Close dropdown when clicking outside
   React.useEffect(() => {
     const handleClickOutside = (event) => {
       if (showUserMenu && !event.target.closest('.user-menu-container')) {
@@ -64,100 +66,56 @@ const Navbar = () => {
         </div>
 
         <div className="hidden lg:flex flex-1 gap-5 items-center justify-end">
-          {/* <Button className="rounded-lg bg-primary px-8 py-6 text-center text-sm font-semibold text-primary-foreground outline-none  transition duration-100 focus-visible:ring active:bg-primary md:text-base" onClick={() => router.push('/auth')}>Sign Up</Button> */}
-          <Heart className="cursor-pointer hover:text-primary" size={20} onClick={() => router.push('/wishlist')} />
-            
-          <LucideShoppingBag className="cursor-pointer hover:text-primary" size={20} onClick={() => router.push('/cart')} />
+          {!user ? (
+            <Button className="rounded-lg bg-primary px-8 py-6 text-center text-sm font-semibold text-primary-foreground outline-none  transition duration-100 focus-visible:ring active:bg-primary md:text-base" onClick={() => router.push('/auth')}>Sign Up</Button>
+          ) : (<>
+            <Heart className="cursor-pointer hover:text-primary" size={20} onClick={() => router.push('/wishlist')} />
 
-          <div className="relative user-menu-container">
-            <User
-              className="cursor-pointer hover:text-primary"
-              size={20}
-              onClick={() => setShowUserMenu(!showUserMenu)}
-            />
-            {showUserMenu && (
-              <div className="absolute right-0 top-full mt-3 w-52 bg-white shadow-xl z-50 rounded-sm">
-                <button
-                  onClick={() => {
-                    router.push('/account');
-                    setShowUserMenu(false);
-                  }}
-                  className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
-                >
-                  <UserCircle className="w-5 h-5 stroke-[1.5]" />
-                  My Account
-                </button>
-                <button
-                  onClick={() => {
-                    router.push('/orders');
-                    setShowUserMenu(false);
-                  }}
-                  className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
-                >
-                  <Package className="w-5 h-5 stroke-[1.5]" />
-                  Orders
-                </button>
-                <button
-                  onClick={() => {
-                    // Handle logout logic here
-                    router.push('/auth');
-                    setShowUserMenu(false);
-                  }}
-                  className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
-                >
-                  <LogOut className="w-5 h-5 stroke-[1.5]" />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+            <LucideShoppingBag className="cursor-pointer hover:text-primary" size={20} onClick={() => router.push('/cart')} />
 
-        <div className="flex gap-3 items-center lg:hidden">
-          <Heart className="cursor-pointer hover:text-primary" size={20} />
-          <LucideShoppingBag className="cursor-pointer hover:text-primary" size={20} onClick={() => router.push('/cart')} />
-          <div className="relative user-menu-container">
-            <User
-              className="cursor-pointer hover:text-primary"
-              size={20}
-              onClick={() => setShowUserMenu(!showUserMenu)}
-            />
-            {showUserMenu && (
-              <div className="absolute right-0 top-full mt-3 w-52 bg-white shadow-xl z-50 rounded-sm">
-                <button
-                  onClick={() => {
-                    router.push('/account');
-                    setShowUserMenu(false);
-                  }}
-                  className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
-                >
-                  <UserCircle className="w-5 h-5 stroke-[1.5]" />
-                  My Account
-                </button>
-                <button
-                  onClick={() => {
-                    router.push('/orders');
-                    setShowUserMenu(false);
-                  }}
-                  className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
-                >
-                  <Package className="w-5 h-5 stroke-[1.5]" />
-                  Orders
-                </button>
-                <button
-                  onClick={() => {
-                    // Handle logout logic here
-                    router.push('/auth');
-                    setShowUserMenu(false);
-                  }}
-                  className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
-                >
-                  <LogOut className="w-5 h-5 stroke-[1.5]" />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
+            <div className="relative user-menu-container">
+              <User
+                className="cursor-pointer hover:text-primary"
+                size={20}
+                onClick={() => setShowUserMenu(!showUserMenu)}
+              />
+              {showUserMenu && (
+                <div className="absolute right-0 top-full mt-3 w-52 bg-white shadow-xl z-50 rounded-sm">
+                  <button
+                    onClick={() => {
+                      router.push('/account');
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
+                  >
+                    <UserCircle className="w-5 h-5 stroke-[1.5]" />
+                    Hey {user.user_metadata.display_name}!
+                  </button>
+                  <button
+                    onClick={() => {
+                      router.push('/orders');
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5"
+                  >
+                    <Package className="w-5 h-5 stroke-[1.5]" />
+                    Orders
+                  </button>
+                  <button
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      setShowUserMenu(false);
+                      toast.success("Logged out!");
+                      router.push('/');
+                    }}
+                    className="w-full text-left px-5 py-3.5 text-sm font-semibold hover:text-primary hover:bg-gray-50 transition-all flex items-center gap-3.5">
+                    <LogOut className="w-5 h-5 stroke-[1.5]" onClick={async () => { await supabase.auth.signOut(); setShowUserMenu(false); toast.success("Logged out!") }} />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </>)}
         </div>
       </div>
     </div>

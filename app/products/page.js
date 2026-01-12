@@ -450,9 +450,7 @@ const ProductsPage = () => {
                   className={
                     viewMode === 'grid'
                       ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
-                      : 'flex flex-col gap-6'
-                  }
-                >
+                      : 'flex flex-col gap-6'}>
                   {filteredProducts.map(product => (
                     <div
                       key={product.id}
@@ -460,15 +458,13 @@ const ProductsPage = () => {
                       className={`group cursor-pointer ${viewMode === 'list'
                         ? 'flex flex-row gap-4 border-b pb-6'
                         : 'flex flex-col'
-                        }`}
-                    >
+                        }`}>
                       {/* Product Image */}
                       <div
                         className={`relative bg-gray-100 rounded-lg overflow-hidden ${viewMode === 'list'
                           ? 'w-32 h-32 md:w-40 md:h-40 flex-shrink-0'
                           : 'aspect-[2/3]'
-                          }`}
-                      >
+                          }`}>
                         <Image
                           src={product.images[0]}
                           alt={product.name}
@@ -494,7 +490,7 @@ const ProductsPage = () => {
                       {/* Product Info */}
                       <div className={viewMode === 'list' ? 'flex-1' : 'mt-3'}>
                         <span className="text-xs text-gray-600 block mb-1">{product.brand}</span>
-                        <h3 className={`font-semibold line-clamp-2 group-hover:text-primary transition-colors ${viewMode === 'list' ? 'text-base' : 'text-sm'
+                        <h3 className={`font-semibold line-clamp-1 group-hover:text-primary transition-colors ${viewMode === 'list' ? 'text-base' : 'text-sm'
                           }`}>
                           {product.name}
                         </h3>
@@ -503,32 +499,19 @@ const ProductsPage = () => {
                             {product.category} • {product.gender}
                           </p>
                         )}
-                        <div className="flex items-center gap-1 mt-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-3 h-3 ${i < Math.floor(product.rating)
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                                }`}
-                            />
-                          ))}
-                          <span className="text-xs text-gray-600 ml-1">
-                            ({product.reviews})
-                          </span>
-                        </div>
+                        
                         <div className={`flex items-center gap-2 mt-2 ${viewMode === 'list' ? 'flex-col items-start' : ''
                           }`}>
                           <span className={`font-bold ${viewMode === 'list' ? 'text-lg' : 'text-sm'}`}>
                             {formatPrice(product.price)}
                           </span>
-                          {product.discount > 0 && (
+                          {product.price < product.cost && (
                             <>
                               <span className="text-xs text-gray-400 line-through">
-                                {formatPrice(product.rate)}
+                                {formatPrice(product.cost)}
                               </span>
                               <span className="text-xs text-primary font-semibold">
-                                {product.discount}% OFF
+                                {((product.cost - product.price) / product.cost * 100).toFixed(0)}% OFF
                               </span>
                             </>
                           )}

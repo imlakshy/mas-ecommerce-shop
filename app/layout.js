@@ -1,5 +1,7 @@
 import { Jost } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
+import { AuthProvider } from "@/context/AuthContext";
 
 const jost = Jost({ subsets: ["latin"] });
 
@@ -12,9 +14,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={jost.className}>
-
+        <AuthProvider>
         {children}
-
+        <Toaster position="top-right" />
+        </AuthProvider>
       </body>
     </html>
   );

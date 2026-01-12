@@ -4,6 +4,9 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { ArrowRight, Edit2, Plus, Trash2 } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { toast } from 'sonner'
+import { supabase } from '@/lib/createSupabaseClient'
 
 const AccountPage = () => {
   const router = useRouter();
@@ -13,11 +16,7 @@ const AccountPage = () => {
   const [showEditAddressModal, setShowEditAddressModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
 
-  const [profile, setProfile] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+91 9876543210'
-  });
+  const { user, loading } = useAuth();
 
   const [addresses, setAddresses] = useState([
     {
@@ -48,7 +47,7 @@ const AccountPage = () => {
   const [editProfile, setEditProfile] = useState({
     name: '',
     email: '',
-    phone: ''
+    password: ','
   });
 
   const orders = [
@@ -76,17 +75,34 @@ const AccountPage = () => {
   ];
 
   useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth");
+    }
+    console.log(user);
+
     setMounted(true);
-  }, []);
+  }, [user, loading]);
 
   const handleEditProfile = () => {
-    setEditProfile({ ...profile });
+    setEditProfile({ name: user?.user_metadata.display_name || '', email: user?.email || '', phone: user?.phone || '' });
     setShowEditProfileModal(true);
   };
 
-  const handleSaveProfile = () => {
-    setProfile(editProfile);
+  const handleSaveProfile = async () => {
     setShowEditProfileModal(false);
+    return toast.promise(
+      supabase.auth.updateUser({
+        data: {
+          display_name: editProfile.name,
+        },
+        password: editProfile.password,
+      }),
+      {
+        loading: "Updating...",
+        success: "Profile updated",
+        error: (err) => err?.message || "Failed to update profile",
+      }
+    );
   };
 
   const handleAddNewAddress = () => {
@@ -164,15 +180,14 @@ const AccountPage = () => {
             <div className='flex flex-col gap-2 text-sm'>
               <div>
                 <span className='text-gray-600 font-light'>Name:</span>
-                <span className='ml-2 font-semibold'>{profile.name}</span>
+                <span className='ml-2 font-semibold'>{user?.user_metadata.display_name}</span>
               </div>
               <div>
                 <span className='text-gray-600 font-light'>Email:</span>
-                <span className='ml-2 font-semibold'>{profile.email}</span>
+                <span className='ml-2 font-semibold'>{user?.email}</span>
               </div>
               <div>
-                <span className='text-gray-600 font-light'>Phone:</span>
-                <span className='ml-2 font-semibold'>{profile.phone}</span>
+                <span className='text-gray-600 font-light text-xs underline cursor-pointer' onClick={handleEditProfile}>Change Password</span>
               </div>
             </div>
           </div>
@@ -257,10 +272,9 @@ const AccountPage = () => {
                     </div>
                     <div className='flex flex-col items-end gap-1 text-sm'>
                       <div className='font-semibold'>{order.total}</div>
-                      <div className={`font-light ${
-                        order.status === 'Delivered' ? 'text-green-600' :
+                      <div className={`font-light ${order.status === 'Delivered' ? 'text-green-600' :
                         order.status === 'Shipped' ? 'text-blue-600' : 'text-gray-600'
-                      }`}>
+                        }`}>
                         {order.status}
                       </div>
                       <button className='text-xs text-gray-600 underline hover:text-black mt-1 flex items-center gap-1'>
@@ -278,7 +292,7 @@ const AccountPage = () => {
       {/* Edit Profile Modal */}
       {showEditProfileModal && (
         <div
-          className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
+          className='fixed inset-0 bg-black bg-opacity-50 h-screen flex items-center justify-center z-50'
           onClick={() => setShowEditProfileModal(false)}
         >
           <div
@@ -291,7 +305,7 @@ const AccountPage = () => {
                 className='text-2xl cursor-pointer hover:text-gray-600'
                 onClick={() => setShowEditProfileModal(false)}
               >
-                ×
+                
               </span>
             </div>
 
@@ -309,30 +323,30 @@ const AccountPage = () => {
 
               <div className='flex flex-col gap-2'>
                 <label className='text-sm font-light'>Email</label>
-                <input
-                  type='email'
-                  value={editProfile.email}
-                  onChange={(e) => setEditProfile({ ...editProfile, email: e.target.value })}
-                  className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
-                  placeholder='Enter email'
-                />
+                <div
+                  className='border border-gray-300 p-2 cursor-disabled text-sm focus:outline-none focus:border-black text-gray-400'
+                  onClick={() => toast.error("Email cannot be changed")}>
+                  {editProfile.email}
+                </div>
               </div>
 
               <div className='flex flex-col gap-2'>
-                <label className='text-sm font-light'>Phone Number</label>
+                <label className='text-sm font-light'>New Password</label>
                 <input
-                  type='text'
-                  value={editProfile.phone}
-                  onChange={(e) => setEditProfile({ ...editProfile, phone: e.target.value })}
+                  type='password'
+                  value={editProfile.password}
+                  onChange={(e) => setEditProfile({ ...editProfile, password: e.target.value })}
                   className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
-                  placeholder='Enter phone number'
+                  placeholder='Enter new password'
                 />
               </div>
             </div>
 
             <div className='mt-6 flex gap-3'>
               <button
-                onClick={() => setShowEditProfileModal(false)}
+                onClick={() => {
+                  setShowEditProfileModal(false); console.log(editProfile);
+                }}
                 className='flex-1 border-2 border-black p-2 text-sm font-light hover:bg-gray-100'
               >
                 Cancel
@@ -351,7 +365,7 @@ const AccountPage = () => {
       {/* Add New Address Modal */}
       {showAddAddressModal && (
         <div
-          className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
+          className='fixed inset-0 bg-black h-screen bg-opacity-50 flex items-center justify-center z-50'
           onClick={() => {
             setShowAddAddressModal(false);
             setNewAddress({ name: '', address: '', zip: '', phone: '' });
@@ -444,7 +458,7 @@ const AccountPage = () => {
       {/* Edit Address Modal */}
       {showEditAddressModal && editingAddress && (
         <div
-          className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
+          className='fixed inset-0 bg-black h-screen bg-opacity-50 flex items-center justify-center z-50'
           onClick={() => {
             setShowEditAddressModal(false);
             setEditingAddress(null);
