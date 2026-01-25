@@ -36,6 +36,8 @@ const AuthPage = () => {
 
     const handleSignup = async () => {
         setLoading(true);
+        console.log(process.env.NEXT_PUBLIC_SUPABASE_URL);
+        console.log(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
         try {
             toast.promise(
                 supabase.auth.signUp({
@@ -47,7 +49,8 @@ const AuthPage = () => {
                         }
                     }
                 }).then(({ error }) => {
-                    if (error) throw error;
+                    console.log(error);
+                    
                 }),
                 {
                     loading: 'Registering...',

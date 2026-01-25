@@ -2,38 +2,23 @@
 import React from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useAuth } from '@/context/AuthContext'
+import { supabase } from '@/lib/createSupabaseClient'
+import { toast } from 'sonner'
 
 const CartPage = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
+
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
   const [showEditAddressModal, setShowEditAddressModal] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState({
-    id: 1,
-    name: 'John Doe',
-    address: '123 Main Street, City',
-    zip: '123456',
-    phone: '+91 9876543210'
-  });
+
+  const [selectedAddress, setSelectedAddress] = useState(null);
   const [tempSelectedAddress, setTempSelectedAddress] = useState(null);
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      address: '123 Main Street, City',
-      zip: '123456',
-      phone: '+91 9876543210'
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      address: '456 Park Avenue, Downtown',
-      zip: '789012',
-      phone: '+91 9876543211'
-    }
-  ]);
+
   const [newAddress, setNewAddress] = useState({
     name: '',
     address: '',
@@ -42,20 +27,116 @@ const CartPage = () => {
   });
   const [editingAddress, setEditingAddress] = useState(null);
 
+  const [addresses, setAddresses] = useState([]);
+
+  const [cartItems, setCartItems] = useState([]);
+  const [editItemId, setEditItemId] = useState(null);
+  const [qty, setQty] = useState(1);
+  const [size, setSize] = useState('');
+
+  const [totalMRP, setTotalMRP] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [couponDiscount, setCoupounDiscount] = useState(0);
+
+  const shippingFee = useMemo(() => {
+    return totalPrice > 2000 ? 0 : 99;
+  }, [totalPrice]);
+
+  const totalAmount = useMemo(() => {
+    return (totalPrice - couponDiscount) + shippingFee;
+  }, [totalPrice, couponDiscount]);
+
+  const formatPrice = (price) => {
+    if (price == null) return "₹—";
+    return `₹${Number(price).toLocaleString("en-IN")}`;
+  };
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    // Initialize temp selected address when modal opens
-    if (showAddressModal) {
-      setTempSelectedAddress(selectedAddress);
-    }
-  }, [showAddressModal, selectedAddress]);
+    if (!user) return;
 
-  const handleAddressSelect = (address) => {
-    setTempSelectedAddress(address);
-  };
+    const init = async () => {
+      const data = await supabase.from("cart").
+        select(`
+          *,
+          products(*)`)
+        .eq("user_id", user.id);
+
+      setCartItems(data.data || []);
+    }
+    init();
+
+    const totalPrice = cartItems.reduce(
+      (sum, item) => sum + item.products.price * item.qty,
+      0
+    );
+    const totalMRP = cartItems.reduce(
+      (sum, item) => sum + item.products.cost * item.qty,
+      0
+    );
+
+    setTotalPrice(totalPrice);
+    setTotalMRP(totalMRP)
+  }, [user, cartItems]);
+
+  useEffect(() => {
+    if (!user) return
+    const init = async () => {
+      const data = await supabase.from("addresses").select("*").eq("user_id", user.id)
+      setAddresses(data.data)
+    }
+    init();
+    if (!selectedAddress) {
+      setSelectedAddress(addresses[0])
+    }
+  }, [user, addresses])
+
+
+  useEffect(() => {
+    const setSizeAndQty = async (id) => {
+      if (editItemId) {
+        const data = await supabase.from("cart").select("*").eq("id", id);
+
+        setQty(data.data.qty)
+        setSize(data.data.size)
+      }
+    }
+    setSizeAndQty(editItemId);
+  }, [editItemId])
+
+  const handleMoveToWishlist = async (id, productId) => {
+    const data = await supabase.from("wishlist")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("product_id", productId)
+
+    if (data.data.length > 0) {
+      toast.error("Already in wishlist");
+      await supabase.from("cart").delete().eq("id", id)
+    } else {
+      const data = await supabase.from("wishlist").insert({
+        user_id: user.id,
+        product_id: productId
+      })
+      console.log(data);
+
+      await supabase.from("cart").delete().eq("id", id)
+      toast.success("Added to wishlist")
+    }
+  }
+
+  const handleRemove = async (productId, size, color) => {
+    if (!user) return;
+    await supabase.from("cart")
+      .delete()
+      .eq("product_id", productId)
+      .eq("size", size)
+      .eq("color", color)
+      .eq("user_id", user.id);
+  }
 
   const handleConfirmAddress = () => {
     if (tempSelectedAddress) {
@@ -64,19 +145,27 @@ const CartPage = () => {
     setShowAddressModal(false);
   };
 
-  const handleAddNewAddress = () => {
-    if (newAddress.name && newAddress.address && newAddress.zip && newAddress.phone) {
-      const newId = Math.max(...addresses.map(a => a.id)) + 1;
-      const addressToAdd = {
-        id: newId,
-        ...newAddress
-      };
-      setAddresses([...addresses, addressToAdd]);
-      setTempSelectedAddress(addressToAdd);
-      setNewAddress({ name: '', address: '', zip: '', phone: '' });
-      setShowAddAddressModal(false);
+  const handleAddAddress = async () => {
+    const { data, error } = await supabase.from("addresses").insert({
+      user_id: user.id,
+      full_name: newAddress.name,
+      phone: newAddress.phone,
+      address_line: newAddress.address,
+      zip: newAddress.zip,
+    })
+
+    console.log(data);
+
+
+    if (error) {
+      if (error.code === "23505") {
+        toast.error("Address Already Exists");
+      }
     }
-  };
+    setShowAddAddressModal(false)
+    setNewAddress([]);
+    setShowAddAddressModal(false)
+  }
 
   const handleEditAddress = () => {
     if (tempSelectedAddress) {
@@ -85,15 +174,47 @@ const CartPage = () => {
     }
   };
 
-  const handleSaveEditedAddress = () => {
-    if (editingAddress && editingAddress.name && editingAddress.address && editingAddress.zip && editingAddress.phone) {
-      setAddresses(addresses.map(addr =>
-        addr.id === editingAddress.id ? editingAddress : addr
-      ));
-      setTempSelectedAddress(editingAddress);
-      setEditingAddress(null);
-      setShowEditAddressModal(false);
+  const handleCheckout = async () => {
+    const { data: order, error } = await supabase.from("orders")
+      .insert({
+        user_id: user.id,
+        address_id: selectedAddress.id,
+        total_amount: totalAmount,
+        total_price: totalPrice,
+        total_mrp: totalMRP,
+        coupondiscount: couponDiscount,
+        shipping_fee: shippingFee,
+        payment_method: 'COD'
+      }).select().single();
+      
+
+    if (error) {
+      console.log(error);
+      
+      toast.error("Failed to create order. Please try again.");
+      return;
     }
+
+    const orderItems = cartItems.map(item => ({
+      order_id: order.id,
+      product_id: item.products.id,
+      qty: item.qty,
+      size: item.size,
+      color: item.color,
+      price: item.products.price,
+    }))
+
+    const { error: orderItemsError } = await supabase.from("order_items").insert(orderItems);
+
+
+    if (orderItemsError) {
+      toast.error("Failed to save order items. Please try again.");
+      return;
+    }
+
+    await supabase.from("cart").delete().eq("user_id", user.id);
+
+    router.push(`/orders/success?orderId=${order.id}`);
   };
 
   return (<div className={`transition-all duration-500 ease-out
@@ -114,93 +235,91 @@ const CartPage = () => {
       <div className='flex flex-col max-h-full md:flex-row gap-6 overflow-auto lg:gap-20 flex-1'>
         {/* Cart Items */}
         <div className='w-full md:w-3/4 py-1 md:py-2 lg:py-4 md:overflow-auto'>
-          {/* Item 1 */}
-          <div className='border-b py-6 flex items-center min-w-[350px]'>
-            <div className='h-24 md:h-36 lg:h-48 w-24 md:w-36 lg:w-48 mr-4 relative'>
-              <Image
-                src="/hoodie.avif"
-                alt="Product Image"
-                fill
-                className='object-cover'
-              />
+          {cartItems.length > 0 && cartItems.map((item) => (
+            <div key={item.id} className='border-b py-6 flex items-center min-w-[350px]'>
+              <div
+                className='h-24 md:h-36 lg:h-48 aspect-[2/3] mr-4 relative cursor-pointer'
+                onClick={() => router.push(`/product/${item.products.id}`)}>
+                <Image
+                  src={item.products.images[0]}
+                  alt="Product Image"
+                  fill
+                  className='object-cover'
+                />
+              </div>
+              <div className='flex flex-col justify-center flex-1 relative'>
+                <span className='text-sm text-gray-700'>{item.products.brand}</span>
+                <span className='line-clamp-1 pb-2 lg:pb-4'>{item.products.name}</span>
+
+                {item.products.color && <span className='text-gray-600 font-light text-xs'>Color: {item.color}</span>}
+
+                <div className='flex items-center pt-1 md:pt-2 lg:pt-4'>
+                  <label htmlFor="size" className='text-gray-600 font-light text-xs'>Size: {editItemId != item.id && item.size}</label>
+
+                  {editItemId === item.id && (
+                    <select
+                      id="size"
+                      value={item.size}
+                      onChange={
+                        async (e) => {
+                          await supabase.from("cart").update({ size: e.target.value }).eq("id", item.id)
+                          setEditItemId(null);
+                        }
+                      }
+                      className="bg-transparent w-10 text-xs scale-70"
+                    >
+                      <option value={"S"}>S</option>
+                      <option value={"M"}>M</option>
+                      <option value={"L"}>L</option>
+                      <option value={"XL"}>XL</option>
+                      <option value={"XXL"}>XXL</option>
+                    </select>
+                  )}
+
+                </div>
+
+                <div className='flex items-center pt-1 md:pt-2 lg:pt-4'>
+                  <label htmlFor="quantity" className='text-gray-600 font-light text-xs'>Qty: {editItemId != item.id && item.qty}</label>
+
+                  {editItemId === item.id && (
+                    <select
+                      id="quantity"
+                      value={item.qty}
+                      onChange={
+                        async (e) => {
+                          await supabase.from("cart").update({ qty: e.target.value }).eq("id", item.id)
+                          setEditItemId(null);
+                        }
+                      }
+                      className="bg-transparent w-7 text-xs scale-70"
+                    >
+                      <option value={1}>1</option>
+                      <option value={2}>2</option>
+                      <option value={3}>3</option>
+                      <option value={4}>4</option>
+                      <option value={5}>5</option>
+                    </select>
+                  )}
+
+                </div>
+
+                <div className='pt-2 md:pt-3 lg:pt-6 flex gap-2 text-xs font-semibold text-gray-500'>
+                  <span className='cursor-pointer hover:text-black' onClick={() => setEditItemId(editItemId === item.id ? null : item.id)}>{editItemId === item.id ? "Done" : "Edit"}</span>
+                  |
+                  <span className='cursor-pointer hover:text-black' onClick={() => { handleRemove(item.products.id, item.size, item.color) }}>Remove</span>
+                  |
+                  <span className='cursor-pointer hover:text-black' onClick={() => handleMoveToWishlist(item.id, item.products.id)}>Move to wishlist</span>
+                </div>
+
+                <div className='flex flex-col absolute right-2 items-end'>
+                  {item.products.price < item.products.cost && <span className='text-gray-400 line-through text-xs text-extralight'>{formatPrice(item.products.cost * item.qty)}</span>}
+
+                  <span className=''>{formatPrice(item.products.price * item.qty)}</span>
+                </div>
+
+              </div>
             </div>
-            <div className='flex flex-col justify-center flex-1 relative'>
-              <span className='text-sm text-gray-700'>Zara</span>
-              <span className='line-clamp-1 pb-2 lg:pb-4'>Loose fit zip through hoodie</span>
-
-              <span className='text-gray-600 font-light text-xs'>Color: Black</span>
-              <span className='text-gray-600 font-light text-xs'>Size: L</span>
-
-              <div className='flex items-center pt-1 md:pt-2 lg:pt-4'>
-                <label htmlFor="quantity" className='text-gray-600 font-light text-xs'>Qty:</label>
-                <select name="quantity" id="quantity" className='bg-transparent w-7 text-xs scale-70'>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                </select>
-              </div>
-
-              <div className='pt-2 md:pt-3 lg:pt-6 flex gap-2 text-xs font-semibold text-gray-500'>
-                <span className='cursor-pointer hover:text-black'>Edit</span>
-                |
-                <span className='cursor-pointer hover:text-black'>Remove</span>
-                |
-                <span className='cursor-pointer hover:text-black'>Move to wishlist</span>
-              </div>
-
-              <div className='flex flex-col absolute right-2 items-end'>
-                <span className='text-gray-400 line-through text-xs text-extralight'>₹5,499</span>
-                <span className=''>₹3,999</span>
-              </div>
-
-            </div>
-          </div>
-          {/* Item 1 */}
-          <div className='border-b py-6 flex items-center min-w-[350px]'>
-            <div className='h-24 md:h-36 lg:h-48 w-24 md:w-36 lg:w-48 mr-4 relative'>
-              <Image
-                src="/hoodie.avif"
-                alt="Product Image"
-                fill
-                className='object-cover'
-              />
-            </div>
-            <div className='flex flex-col justify-center flex-1 relative'>
-              <span className='text-sm text-gray-700'>Zara</span>
-              <span className='line-clamp-1'>Loose fit zip through hoodie</span>
-              <span className='font-light text-gray-500 pb-1 mb:pb-2 lg:pb-4 text-sm'>Sold by: Zara India</span>
-              <span className='text-gray-600 font-light text-xs'>Color: Black</span>
-              <span className='text-gray-600 font-light text-xs'>Size: L</span>
-
-              <div className='flex items-center pt-1 md:pt-2 lg:pt-4'>
-                <label htmlFor="quantity" className='text-gray-600 font-light text-xs'>Qty:</label>
-                <select name="quantity" id="quantity" className='w-7 text-xs scale-70'>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                </select>
-              </div>
-
-              <div className='pt-2 md:pt-3 lg:pt-6 flex gap-2 text-xs font-semibold text-gray-500'>
-                <span className='cursor-pointer hover:text-black'>Edit</span>
-                |
-                <span className='cursor-pointer hover:text-black'>Remove</span>
-                |
-                <span className='cursor-pointer hover:text-black'>Move to wishlist</span>
-              </div>
-
-              <div className='flex flex-col absolute right-2 items-end'>
-                <span className='text-gray-400 line-through text-xs text-extralight'>₹5,499</span>
-                <span className=''>₹3,999</span>
-              </div>
-
-            </div>
-          </div>
-
+          ))}
 
           <div className='pt-8 pb-4'>
             <span className='text-3xl font-bold'>Nothing else here</span><br />
@@ -215,15 +334,17 @@ const CartPage = () => {
             <span className='text-lg sm:text-2xl font-light pb-2'>Customer Information</span>
 
             <div className='flex flex-col gap-2 text-xs'>
-              <div className='text-sm font-semibold'>{selectedAddress.name}</div>
-              <div>{selectedAddress.address}</div>
-              <div>{selectedAddress.zip}</div>
-              <div className='text-sm'>{selectedAddress.phone}</div>
+              <div className='text-sm font-semibold'>{selectedAddress?.full_name}</div>
+              <div>{selectedAddress?.address_line}</div>
+              <div>{selectedAddress?.zip}</div>
+              <div className='text-sm'>{selectedAddress?.phone}</div>
               <span
                 className='text-xs text-gray-600 underline cursor-pointer hover:text-black pt-1'
-                onClick={() => setShowAddressModal(true)}
-              >
-                Change Address
+                onClick={() => {
+                  setShowAddressModal(true)
+                  setTempSelectedAddress(selectedAddress)
+                }}>
+                {selectedAddress ? "Change Address" : "Add Info"}
               </span>
             </div>
           </div>
@@ -233,32 +354,50 @@ const CartPage = () => {
             <span className='text-lg sm:text-2xl font-light pt-6 pb-2'>Order Summary</span>
 
             <div className='flex flex-col gap-2'>
-              <span className='font-semibold pb-1 md:pb-2 lg:pb-4 underline underline-offset-4 text-xs md:text-sm lg:text-base'>2 Item(s)</span>
+              <span className='font-semibold pb-1 md:pb-2 lg:pb-4 underline underline-offset-4 text-xs md:text-sm lg:text-base'>{cartItems.length} Item(s)</span>
 
-              <div className='flex justify-between text-sm'><span>Total MRP</span> <span>₹14,499</span></div>
-              <div className='flex justify-between text-sm'><span>Discount on MRP</span> <span className='text-primary'>-₹4,350</span></div>
+              {cartItems.length > 0 && <>
+                <div className='flex justify-between text-sm'><span>Total MRP</span> <span>{formatPrice(totalMRP)}</span></div>
 
-              <input type="text" id='discountCoupon' placeholder='Add a coupon' className='border border-black text-primary p-2 text-sm' />
+                {totalMRP > totalPrice && <div className='flex justify-between text-sm'><span>Discount on MRP</span> <span className='text-primary'>-{formatPrice(totalMRP - totalPrice)}</span></div>}
 
-              <div className='flex justify-between text-sm'><span>Coupon Discount</span> <span className='text-primary'>-₹2,030</span></div>
+                <input type="text" id='discountCoupon' placeholder='Add a coupon' className='border border-black text-primary p-2 text-sm' />
 
+                {couponDiscount > 0 && <div className='flex justify-between text-sm'><span>Coupon Discount</span> <span className='text-primary'>-₹2,030</span></div>}
 
-              <div className='flex justify-between text-sm'>
-                <span>Shipping fee</span>
-                <div>
-                  <span className='text-gray-400 line-through'>₹99</span>
-                  <span className='font-semibold text-primary'> FREE</span>
+                <div className='flex justify-between text-sm'>
+                  <span>Total</span>
+                  <div>
+                    <span>{formatPrice(totalPrice)}</span>                    
+                  </div>
                 </div>
-              </div>
 
-              <div className='flex justify-between font-semibold border-t-2 py-2 my-2'>
-                <span>Total Amount</span>
-                <span>₹8,119</span></div>
+                <div className='flex justify-between text-sm'>
+                  <span>Shipping fee</span>
+                  <div>
+                    <span className={shippingFee > 0 ? " " : "text-gray-400 line-through"}>{formatPrice(99)}</span>
+
+                    {shippingFee === 0 && <span className='font-semibold text-primary'> FREE</span>}
+                  </div>
+                </div>
+
+                <div className='flex justify-between font-semibold border-t-2 py-2 my-2'>
+                  <span>Total Amount</span>
+                  <span>{formatPrice(totalAmount)}</span>
+                </div>
+              </>}
+
             </div>
           </div>
 
-          <div className='w-full mt-2 bg-black text-white hover:bg-gray-800 p-2 text-center text-sm cursor-pointer font-light'>Checkout</div>
-          <div className='w-full mt-2 border-2 border-black p-2 text-center text-sm cursor-pointer font-light hover:bg-gray-100'>Add from wishlist</div>
+          {/* Buttons */}
+          {cartItems.length > 0 && <div className='w-full mt-2 bg-black text-white hover:bg-gray-800 p-2 text-center text-sm cursor-pointer font-light'
+            onClick={handleCheckout}
+          >Checkout</div>}
+
+          <div
+            onClick={() => router.push("/wishlist")}
+            className='w-full mt-2 border-2 border-black p-2 text-center text-sm cursor-pointer font-light hover:bg-gray-100'>Add from wishlist</div>
 
         </div>
       </div>
@@ -267,18 +406,15 @@ const CartPage = () => {
       {showAddressModal && (
         <div
           className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
-          onClick={() => setShowAddressModal(false)}
-        >
+          onClick={() => setShowAddressModal(false)}>
           <div
             className='bg-white p-6 md:p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto'
-            onClick={(e) => e.stopPropagation()}
-          >
+            onClick={(e) => e.stopPropagation()}>
             <div className='flex justify-between items-center mb-4'>
               <span className='text-xl font-light'>Select Address</span>
               <span
                 className='text-2xl cursor-pointer hover:text-gray-600'
-                onClick={() => setShowAddressModal(false)}
-              >
+                onClick={() => setShowAddressModal(false)}>
                 ×
               </span>
             </div>
@@ -291,7 +427,7 @@ const CartPage = () => {
                     ? 'border-black bg-gray-50'
                     : 'border-gray-300 hover:border-gray-400'
                     }`}
-                  onClick={() => handleAddressSelect(address)}
+                  onClick={() => setTempSelectedAddress(address)}
                 >
                   <div className='flex items-start gap-3'>
                     <input
@@ -302,8 +438,8 @@ const CartPage = () => {
                       className='mt-1'
                     />
                     <div className='flex flex-col gap-1 text-sm flex-1'>
-                      <div className='font-semibold'>{address.name}</div>
-                      <div className='text-gray-600'>{address.address}</div>
+                      <div className='font-semibold'>{address.full_name}</div>
+                      <div className='text-gray-600'>{address.address_line}</div>
                       <div className='text-gray-600'>{address.zip}</div>
                       <div className='text-gray-600'>{address.phone}</div>
                     </div>
@@ -314,8 +450,7 @@ const CartPage = () => {
 
             <div
               className='border-2 border-dashed border-gray-300 p-4 cursor-pointer hover:border-black hover:bg-gray-50 transition-all text-center'
-              onClick={() => setShowAddAddressModal(true)}
-            >
+              onClick={() => setShowAddAddressModal(true)}>
               <span className='text-sm font-light'>+ Add New Address</span>
             </div>
 
@@ -324,14 +459,12 @@ const CartPage = () => {
                 onClick={handleEditAddress}
                 disabled={!tempSelectedAddress}
                 className={`flex-1 border-2 border-black p-2 text-sm font-light hover:bg-gray-100 ${!tempSelectedAddress ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-              >
+                  }`}>
                 Edit
               </button>
               <button
                 onClick={handleConfirmAddress}
-                className='flex-1 bg-black text-white p-2 text-sm font-light hover:bg-gray-800'
-              >
+                className='flex-1 bg-black text-white p-2 text-sm font-light hover:bg-gray-800'>
                 Confirm
               </button>
             </div>
@@ -422,7 +555,7 @@ const CartPage = () => {
                 Cancel
               </button>
               <button
-                onClick={handleAddNewAddress}
+                onClick={handleAddAddress}
                 className='flex-1 bg-black text-white p-2 text-sm font-light hover:bg-gray-800'
               >
                 Add Address
@@ -463,8 +596,8 @@ const CartPage = () => {
                 <label className='text-sm font-light'>Full Name</label>
                 <input
                   type='text'
-                  value={editingAddress.name}
-                  onChange={(e) => setEditingAddress({ ...editingAddress, name: e.target.value })}
+                  value={editingAddress.full_name}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, full_name: e.target.value })}
                   className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
                   placeholder='Enter full name'
                 />
@@ -474,8 +607,8 @@ const CartPage = () => {
                 <label className='text-sm font-light'>Address</label>
                 <input
                   type='text'
-                  value={editingAddress.address}
-                  onChange={(e) => setEditingAddress({ ...editingAddress, address: e.target.value })}
+                  value={editingAddress.address_line}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, address_line: e.target.value })}
                   className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
                   placeholder='Enter street address'
                 />
@@ -506,18 +639,30 @@ const CartPage = () => {
 
             <div className='mt-6 flex gap-3'>
               <button
-                onClick={() => {
-                  setShowEditAddressModal(false);
-                  setEditingAddress(null);
+                onClick={async () => {
+                  await supabase.from("addresses").delete().eq("id", editingAddress.id)
+                  setShowEditAddressModal(false)
+
                 }}
                 className='flex-1 border-2 border-black p-2 text-sm font-light hover:bg-gray-100'
               >
-                Cancel
+                Delete
               </button>
               <button
-                onClick={handleSaveEditedAddress}
-                className='flex-1 bg-black text-white p-2 text-sm font-light hover:bg-gray-800'
-              >
+                onClick={async () => {
+                  await supabase
+                    .from("addresses")
+                    .update({
+                      full_name: editingAddress.full_name,
+                      address_line: editingAddress.address_line,
+                      zip: editingAddress.zip,
+                      phone: editingAddress.phone
+                    })
+                    .eq("id", editingAddress.id);
+                  setShowEditAddressModal(false)
+                }}
+
+                className='flex-1 bg-black text-white p-2 text-sm font-light hover:bg-gray-800'>
                 Save Changes
               </button>
             </div>

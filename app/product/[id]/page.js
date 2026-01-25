@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect, use } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -55,6 +55,7 @@ const ProductDetailPage = () => {
 
     useEffect(() => {
         const init = async () => {
+
             const productData = await fetchProductData();
             if (productData) {
                 fetchRelatedProducts(productData.category, productData.id);
@@ -65,7 +66,25 @@ const ProductDetailPage = () => {
         init();
     }, [])
 
-    const handleAddToCart = () => {
+    useEffect(() => {
+        if (!user?.id) return;
+        const init = async () => {
+
+            const data = await supabase
+                .from("wishlist")
+                .select("*")
+                .eq("user_id", user?.id)
+                .eq("product_id", id);
+
+            if (data.data.length > 0) {
+                setIsWishlisted(true);
+            }
+        }
+
+        init();
+    }, [user]);
+
+    const handleAddToCart = async (productId) => {
         if (!selectedSize) {
             alert('Please select a size')
             return
@@ -74,10 +93,27 @@ const ProductDetailPage = () => {
             alert('Please select a color')
             return
         }
-        toast.success('Product added to cart!')
-        setTimeout(() => {
-            router.push('/cart')
-        }, 1500);
+
+        const {data , error} = await supabase.from("cart")
+            .upsert({
+                user_id: user.id,
+                product_id: productId,
+                size: selectedSize,
+                color: selectedColor,
+                qty: quantity
+
+            })
+
+        if (!error) {
+            toast.success('Product added to cart!')
+            setTimeout(() => {
+                router.push('/cart')
+            }, 1500);
+        }
+        
+        if(error?.code === "23505"){
+            toast.error('Product already in cart!')
+        }
     }
     const handleAddToWishlist = async (productId) => {
         if (!user) {
@@ -85,35 +121,27 @@ const ProductDetailPage = () => {
             return;
         }
 
-        // Optimistic UI
-        setIsWishlisted((prev) => !prev);
-
-        let error;
-
         if (isWishlisted) {
-            // REMOVE
-            await supabase
-                .from("wishlist")
+            const err = await supabase.from("wishlist")
                 .delete()
                 .eq("user_id", user.id)
                 .eq("product_id", productId);
-        } else {
-            // ADD
-            await supabase
-                .from("wishlist")
-                .upsert({
-                    user_id: user.id,
-                    product_id: productId,
-                });
-        }
 
-        if (error) {
-            // rollback UI if DB fails
-            setIsWishlisted((prev) => !prev);
-            toast.error("Failed to update wishlist");
+
+            if (err.error) {
+                toast.error("Failed to remove from wishlist");
+            } else {
+                setIsWishlisted(false);
+            }
+        } else {
+            await supabase.from("wishlist")
+                .insert({
+                    user_id: user.id,
+                    product_id: productId
+                })
+            setIsWishlisted(true);
         }
     };
-
 
     const handleQuantityChange = (change) => {
         setQuantity(prev => Math.max(1, Math.min(product?.stock, prev + change)))
@@ -137,7 +165,7 @@ const ProductDetailPage = () => {
             <div className="pt-24 pb-12 px-5 lg:px-[2vw] xl:px-[10vw]">
                 {/* Breadcrumb */}
                 <div className="mb-6 text-sm text-gray-600">
-                    <span className="cursor-pointer hover:text-primary" onClick={() => router.push('/')}>Home</span>
+                    <span className="cursor-pointer hover:text-primary cur" onClick={() => router.push('/')}>Home</span>
                     <span className="mx-2">/</span>
                     <span className="cursor-pointer hover:text-primary" onClick={() => router.push('/products')}>{product?.category}</span>
                     <span className="mx-2">/</span>
@@ -165,7 +193,7 @@ const ProductDetailPage = () => {
                                 )}
 
                                 <button
-                                    onClick={handleAddToWishlist}
+                                    onClick={() => handleAddToWishlist(product.id)}
                                     className={`absolute top-4 right-4 p-2 rounded-full bg-white shadow-lg transition-all hover:scale-110 ${isWishlisted ? 'text-red-500' : 'text-gray-600'}`}>
                                     <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
                                 </button>
@@ -178,16 +206,12 @@ const ProductDetailPage = () => {
                                         <button
                                             key={index}
                                             onClick={() => setSelectedImage(index)}
-                                            className={`relative flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 transition-all
-          ${selectedImage === index ? 'border-primary' : 'border-gray-200'}
-        `}
-                                        >
+                                            className={`relative flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index ? 'border-primary' : 'border-gray-200'}`}>
                                             <Image
                                                 src={image}
                                                 alt={`${product?.name} view ${index + 1}`}
                                                 fill
-                                                className="object-cover"
-                                            />
+                                                className="object-cover" />
                                         </button>
                                     ))}
                                 </div>
@@ -234,9 +258,8 @@ const ProductDetailPage = () => {
                                 <div className="flex items-center justify-between mb-3">
                                     <label className="text-sm font-semibold">Size</label>
                                     <button
-                                        onClick={() => setShowSizeGuide(!showSizeGuide)}
-                                        className="text-sm text-primary hover:underline"
-                                    >
+                                        onClick={() => {setShowSizeGuide(!showSizeGuide)}}
+                                        className="text-sm text-primary hover:underline">
                                         Size Guide
                                     </button>
                                 </div>
@@ -272,15 +295,15 @@ const ProductDetailPage = () => {
                                         {product?.colors.map((color, index) => (
                                             <button
                                                 key={index}
-                                                onClick={() => setSelectedColor(color.name)}
-                                                className={`relative w-10 h-10 rounded-full border-2 transition-all ${selectedColor === color.name
+                                                onClick={() => setSelectedColor(color)}
+                                                className={`relative w-10 h-10 rounded-full border-2 transition-all ${selectedColor === color
                                                     ? 'border-primary scale-110'
                                                     : 'border-gray-300 hover:border-gray-400'
                                                     }`}
-                                                style={{ backgroundColor: color.value }}
-                                                title={color.name}
+                                                style={{ backgroundColor: color }}
+                                                title={color}
                                             >
-                                                {selectedColor === color.name && (
+                                                {selectedColor === color && (
                                                     <Check className="absolute inset-0 m-auto w-5 h-5 text-white drop-shadow-lg" />
                                                 )}
                                             </button>
@@ -328,8 +351,9 @@ const ProductDetailPage = () => {
                             {/* Action Buttons */}
                             <div className="flex flex-col sm:flex-row gap-3 mb-6">
                                 <Button
-                                    onClick={handleAddToCart}
-                                    disabled={product?.stock === 0 || !selectedSize || (product?.colors?.length > 0 && !selectedColor)}
+                                    onClick={() => handleAddToCart(product.id)}
+                                    disabled={
+                                        product?.stock === 0 || !selectedSize || (product?.colors?.length > 0 && !selectedColor)}
                                     className="flex-1 bg-primary text-white py-6 text-base font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
                                     <LucideShoppingBag className="w-5 h-5 mr-2" />
                                     Add to Cart
@@ -447,8 +471,8 @@ const ProductDetailPage = () => {
                                             {item.name}
                                         </span>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <span className="font-bold text-sm">₹{item.price}</span>
-                                            <span className="text-xs text-gray-400 line-through">₹{item.cost}</span>
+                                            <span className="font-bold text-sm">{formatPrice(item.price)}</span>
+                                            <span className="text-xs text-gray-400 line-through">{formatPrice(item.cost)}</span>
                                         </div>
                                     </div>
                                 </div>

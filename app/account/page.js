@@ -7,36 +7,22 @@ import { ArrowRight, Edit2, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/createSupabaseClient'
+import Modal from '@/components/Modal'
 
 const AccountPage = () => {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
+
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
   const [showEditAddressModal, setShowEditAddressModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
 
-  const { user, loading } = useAuth();
 
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      address: '123 Main Street, City',
-      zip: '123456',
-      phone: '+91 9876543210',
-      isDefault: true
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      address: '456 Park Avenue, Downtown',
-      zip: '789012',
-      phone: '+91 9876543211',
-      isDefault: false
-    }
-  ]);
 
+  const [addresses, setAddresses] = useState([]);
   const [newAddress, setNewAddress] = useState({
     name: '',
     address: '',
@@ -50,38 +36,68 @@ const AccountPage = () => {
     password: ','
   });
 
-  const orders = [
-    {
-      id: 'ORD-001',
-      date: '2024-01-15',
-      items: 2,
-      total: '₹8,119',
-      status: 'Delivered'
-    },
-    {
-      id: 'ORD-002',
-      date: '2024-01-10',
-      items: 1,
-      total: '₹3,999',
-      status: 'Shipped'
-    },
-    {
-      id: 'ORD-003',
-      date: '2024-01-05',
-      items: 3,
-      total: '₹12,500',
-      status: 'Delivered'
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    if (showEditAddressModal || showAddAddressModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
     }
-  ];
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showEditAddressModal, showAddAddressModal]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/auth");
     }
-    console.log(user);
-
     setMounted(true);
   }, [user, loading]);
+
+  useEffect(() => {
+    if (!user) return;
+    const init = async () => {
+      const data = await supabase.from("addresses").select("*").eq("user_id", user.id)
+      setAddresses(data.data);
+
+      const { data: ordersData } = await supabase.from("orders")
+        .select(`*,
+        order_items(
+        price,
+        qty,
+        products(
+        brand,
+        name,
+        cost,
+        images))`)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false }).limit(3);
+
+      setOrders(ordersData);
+    }
+    init();
+  }, [user, addresses, orders]);
+
+  const handleAddAddress = async () => {
+    const { error } = await supabase.from("addresses").insert({
+      user_id: user.id,
+      full_name: newAddress.name,
+      phone: newAddress.phone,
+      address_line: newAddress.address,
+      zip: newAddress.zip,
+    })
+
+    if (error) {
+      if (error.code === "23505") {
+        toast.error("Address Already Exists");
+      }
+    }
+    setShowAddAddressModal(false)
+    setNewAddress([])
+  }
 
   const handleEditProfile = () => {
     setEditProfile({ name: user?.user_metadata.display_name || '', email: user?.email || '', phone: user?.phone || '' });
@@ -105,46 +121,28 @@ const AccountPage = () => {
     );
   };
 
-  const handleAddNewAddress = () => {
-    if (newAddress.name && newAddress.address && newAddress.zip && newAddress.phone) {
-      const newId = Math.max(...addresses.map(a => a.id), 0) + 1;
-      const addressToAdd = {
-        id: newId,
-        ...newAddress,
-        isDefault: addresses.length === 0
-      };
-      setAddresses([...addresses, addressToAdd]);
-      setNewAddress({ name: '', address: '', zip: '', phone: '' });
-      setShowAddAddressModal(false);
-    }
-  };
-
   const handleEditAddress = (address) => {
     setEditingAddress({ ...address });
     setShowEditAddressModal(true);
   };
 
-  const handleSaveEditedAddress = () => {
-    if (editingAddress && editingAddress.name && editingAddress.address && editingAddress.zip && editingAddress.phone) {
-      setAddresses(addresses.map(addr =>
-        addr.id === editingAddress.id ? editingAddress : addr
-      ));
+  const handleSaveEditedAddress = async (id) => {
+    if (editingAddress != null) {
+      await supabase.from("addresses").update({
+        full_name: editingAddress.full_name,
+        address_line: editingAddress.address_line,
+        zip: editingAddress.zip,
+        phone: editingAddress.phone,
+      }).eq("id", id);
+
       setEditingAddress(null);
       setShowEditAddressModal(false);
     }
   };
 
-  const handleDeleteAddress = (id) => {
-    if (addresses.length > 1) {
-      setAddresses(addresses.filter(addr => addr.id !== id));
-    }
-  };
-
-  const handleSetDefaultAddress = (id) => {
-    setAddresses(addresses.map(addr => ({
-      ...addr,
-      isDefault: addr.id === id
-    })));
+  const formatPrice = (price) => {
+    if (price == null) return "₹—";
+    return `₹${Number(price).toLocaleString("en-IN")}`;
   };
 
   return (
@@ -206,27 +204,16 @@ const AccountPage = () => {
             </div>
 
             <div className='flex flex-col gap-4'>
-              {addresses.map((address) => (
+              {addresses?.map((address) => (
                 <div
                   key={address.id}
                   className='border-2 border-gray-300 p-4 flex justify-between items-start'
                 >
                   <div className='flex flex-col gap-1 text-sm flex-1'>
-                    {address.isDefault && (
-                      <span className='text-xs text-gray-500 font-light mb-1'>Default Address</span>
-                    )}
-                    <div className='font-semibold'>{address.name}</div>
-                    <div className='text-gray-600'>{address.address}</div>
+                    <div className='font-semibold'>{address.full_name}</div>
+                    <div className='text-gray-600'>{address.address_line}</div>
                     <div className='text-gray-600'>{address.zip}</div>
                     <div className='text-gray-600'>{address.phone}</div>
-                    {!address.isDefault && (
-                      <button
-                        onClick={() => handleSetDefaultAddress(address.id)}
-                        className='text-xs text-gray-600 underline hover:text-black mt-2 w-fit'
-                      >
-                        Set as default
-                      </button>
-                    )}
                   </div>
                   <div className='flex gap-2'>
                     <button
@@ -235,14 +222,15 @@ const AccountPage = () => {
                     >
                       <Edit2 className='w-4 h-4' />
                     </button>
-                    {!address.isDefault && (
-                      <button
-                        onClick={() => handleDeleteAddress(address.id)}
-                        className='text-gray-600 hover:text-red-600'
-                      >
-                        <Trash2 className='w-4 h-4' />
-                      </button>
-                    )}
+
+                    <button
+                      onClick={async () => {
+                        await supabase.from("addresses").delete().eq("id", address.id)
+                      }}
+                      className='text-gray-600 hover:text-red-600'>
+                      <Trash2 className='w-4 h-4' />
+                    </button>
+
                   </div>
                 </div>
               ))}
@@ -253,30 +241,42 @@ const AccountPage = () => {
           <div className='flex flex-col pb-6'>
             <div className='flex justify-between items-center mb-4'>
               <span className='text-lg sm:text-2xl font-light'>Order History</span>
-              <span className='text-xs text-gray-600 underline cursor-pointer hover:text-black'>
+              <span onClick={() => router.push('/orders')} className='text-xs text-gray-600 underline cursor-pointer hover:text-black'>
                 View All
               </span>
             </div>
 
             <div className='flex flex-col gap-4'>
-              {orders.map((order) => (
+              {orders?.map((order) => (
                 <div
                   key={order.id}
-                  className='border-b py-4 flex flex-col gap-2'
-                >
+                  className='border-b py-4 flex flex-col gap-2'>
                   <div className='flex justify-between items-start'>
-                    <div className='flex flex-col gap-1 text-sm'>
-                      <div className='font-semibold'>{order.id}</div>
-                      <div className='text-gray-600 font-light'>{order.date}</div>
-                      <div className='text-gray-600 font-light'>{order.items} item(s)</div>
-                    </div>
-                    <div className='flex flex-col items-end gap-1 text-sm'>
-                      <div className='font-semibold'>{order.total}</div>
-                      <div className={`font-light ${order.status === 'Delivered' ? 'text-green-600' :
-                        order.status === 'Shipped' ? 'text-blue-600' : 'text-gray-600'
-                        }`}>
-                        {order.status}
+                    <div className='flex gap-2'>
+                      <div className='relative w-16 mb-2 overflow-hidden bg-gray-100 aspect-[2/3]'>
+                        <Image
+                          src={order.order_items[0]?.products?.images[0]}
+                          alt="Product Image"
+                          fill
+                          className='object-cover transition duration-200 group-hover:scale-110' />
                       </div>
+
+                      <div className='flex flex-col justify-center text-sm'>
+                        <div className='text-gray-600 font-semibold'>{order.order_items[0].products.brand} - {order.order_items[0].products.name}</div>
+                        {order.order_items.length > 1 && <div className='text-gray-600 font-light'>+{(order.order_items?.length) - 1} item(s)</div>}
+
+                        <div className='text-gray-600 font-light mt-2'>{new Date(order.created_at).toLocaleDateString()}</div>
+                        <div className={`font-light`}> {order.payment_method}</div>
+                      </div>
+                    </div>
+
+                    <div className='flex flex-col items-end gap-1 text-sm'>
+                      <div className={`font-light ${order.order_status === 'Delivered' ? 'text-green-600' :
+                        order.order_status === 'Shipped' ? 'text-blue-600' : 'text-gray-600'
+                        }`}>
+                        {order.order_status}
+                      </div>
+                      <div className='font-semibold'>{formatPrice(order.total_amount)}</div>
                       <button className='text-xs text-gray-600 underline hover:text-black mt-1 flex items-center gap-1'>
                         View Details <ArrowRight className='w-3 h-3' />
                       </button>
@@ -291,10 +291,7 @@ const AccountPage = () => {
 
       {/* Edit Profile Modal */}
       {showEditProfileModal && (
-        <div
-          className='fixed inset-0 bg-black bg-opacity-50 h-screen flex items-center justify-center z-50'
-          onClick={() => setShowEditProfileModal(false)}
-        >
+        <Modal>
           <div
             className='bg-white p-6 md:p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto'
             onClick={(e) => e.stopPropagation()}
@@ -303,9 +300,7 @@ const AccountPage = () => {
               <span className='text-xl font-light'>Edit Profile</span>
               <span
                 className='text-2xl cursor-pointer hover:text-gray-600'
-                onClick={() => setShowEditProfileModal(false)}
-              >
-                
+                onClick={() => setShowEditProfileModal(false)}>
               </span>
             </div>
 
@@ -359,22 +354,15 @@ const AccountPage = () => {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Add New Address Modal */}
       {showAddAddressModal && (
-        <div
-          className='fixed inset-0 bg-black h-screen bg-opacity-50 flex items-center justify-center z-50'
-          onClick={() => {
-            setShowAddAddressModal(false);
-            setNewAddress({ name: '', address: '', zip: '', phone: '' });
-          }}
-        >
+        <Modal>
           <div
             className='bg-white p-6 md:p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto'
-            onClick={(e) => e.stopPropagation()}
-          >
+            onClick={(e) => e.stopPropagation()}>
             <div className='flex justify-between items-center mb-4'>
               <span className='text-xl font-light'>Add New Address</span>
               <span
@@ -440,43 +428,40 @@ const AccountPage = () => {
                   setShowAddAddressModal(false);
                   setNewAddress({ name: '', address: '', zip: '', phone: '' });
                 }}
-                className='flex-1 border-2 border-black p-2 text-sm font-light hover:bg-gray-100'
-              >
+                className='flex-1 border-2 border-black p-2 text-sm font-light hover:bg-gray-100'>
                 Cancel
               </button>
               <button
-                onClick={handleAddNewAddress}
-                className='flex-1 bg-black text-white p-2 text-sm font-light hover:bg-gray-800'
-              >
+                onClick={() => {
+                  if (
+                    !newAddress.name ||
+                    !newAddress.address ||
+                    !newAddress.phone ||
+                    !newAddress.zip
+                  ) {
+                    toast.error("Please fill required details");
+                  }
+                  handleAddAddress();
+                }}
+                className='flex-1 bg-black text-white p-2 text-sm font-light hover:bg-gray-800'>
                 Add Address
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Edit Address Modal */}
       {showEditAddressModal && editingAddress && (
-        <div
-          className='fixed inset-0 bg-black h-screen bg-opacity-50 flex items-center justify-center z-50'
-          onClick={() => {
-            setShowEditAddressModal(false);
-            setEditingAddress(null);
-          }}
-        >
+        <Modal>
           <div
             className='bg-white p-6 md:p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto'
-            onClick={(e) => e.stopPropagation()}
-          >
+            onClick={(e) => { e.stopPropagation() }}>
             <div className='flex justify-between items-center mb-4'>
               <span className='text-xl font-light'>Edit Address</span>
               <span
                 className='text-2xl cursor-pointer hover:text-gray-600'
-                onClick={() => {
-                  setShowEditAddressModal(false);
-                  setEditingAddress(null);
-                }}
-              >
+                onClick={() => { setShowEditAddressModal(false) }}>
                 ×
               </span>
             </div>
@@ -486,8 +471,8 @@ const AccountPage = () => {
                 <label className='text-sm font-light'>Full Name</label>
                 <input
                   type='text'
-                  value={editingAddress.name}
-                  onChange={(e) => setEditingAddress({ ...editingAddress, name: e.target.value })}
+                  value={editingAddress.full_name}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, full_name: e.target.value, })}
                   className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
                   placeholder='Enter full name'
                 />
@@ -497,8 +482,8 @@ const AccountPage = () => {
                 <label className='text-sm font-light'>Address</label>
                 <input
                   type='text'
-                  value={editingAddress.address}
-                  onChange={(e) => setEditingAddress({ ...editingAddress, address: e.target.value })}
+                  value={editingAddress.address_line}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, address_line: e.target.value, })}
                   className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
                   placeholder='Enter street address'
                 />
@@ -509,7 +494,7 @@ const AccountPage = () => {
                 <input
                   type='text'
                   value={editingAddress.zip}
-                  onChange={(e) => setEditingAddress({ ...editingAddress, zip: e.target.value })}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, zip: e.target.value, })}
                   className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
                   placeholder='Enter ZIP code'
                 />
@@ -520,7 +505,7 @@ const AccountPage = () => {
                 <input
                   type='text'
                   value={editingAddress.phone}
-                  onChange={(e) => setEditingAddress({ ...editingAddress, phone: e.target.value })}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, phone: e.target.value, })}
                   className='border border-gray-300 p-2 text-sm focus:outline-none focus:border-black'
                   placeholder='Enter phone number'
                 />
@@ -529,23 +514,18 @@ const AccountPage = () => {
 
             <div className='mt-6 flex gap-3'>
               <button
-                onClick={() => {
-                  setShowEditAddressModal(false);
-                  setEditingAddress(null);
-                }}
-                className='flex-1 border-2 border-black p-2 text-sm font-light hover:bg-gray-100'
-              >
+                onClick={() => { setShowEditAddressModal(false) }}
+                className='flex-1 border-2 border-black p-2 text-sm font-light hover:bg-gray-100'>
                 Cancel
               </button>
               <button
-                onClick={handleSaveEditedAddress}
-                className='flex-1 bg-black text-white p-2 text-sm font-light hover:bg-gray-800'
-              >
+                onClick={() => { handleSaveEditedAddress(editingAddress.id) }}
+                className='flex-1 bg-black text-white p-2 text-sm font-light hover:bg-gray-800'>
                 Save Changes
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

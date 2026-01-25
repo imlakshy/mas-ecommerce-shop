@@ -4,17 +4,17 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import { Heart, Search, Filter, X, Grid, List, ChevronDown, ChevronUp, Star } from 'lucide-react'
+import { Heart, Search, Filter, X, ChevronDown, ChevronUp, Star } from 'lucide-react'
 import { supabase } from '@/lib/createSupabaseClient'
+import { useAuth } from '@/context/AuthContext'
 
 const ProductsPage = () => {
   const router = useRouter()
+  const { user } = useAuth();
   const searchParams = useSearchParams()
   const [mounted, setMounted] = useState(false)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
   const [showFilters, setShowFilters] = useState(false)
-  const [viewMode, setViewMode] = useState('grid') // 'grid' or 'list'
-
 
   // Filter states
   const [selectedCategories, setSelectedCategories] = useState([])
@@ -27,8 +27,9 @@ const ProductsPage = () => {
   const [showGenderFilter, setShowGenderFilter] = useState(true)
   const [showPriceFilter, setShowPriceFilter] = useState(true)
 
+  const [products, setProducts] = useState([])
+  const [isWishlisted, setIsWishlisted] = useState([])
 
-  const [products, setProducts] = useState([]);
   const fetchProducts = async () => {
     const { data, error } = await supabase
       .from("products")
@@ -42,9 +43,15 @@ const ProductsPage = () => {
     }
   };
 
+  const fetchWishlist = async () => {
+    const { data } = await supabase.from("wishlist").select("product_id");
+    setIsWishlisted(data.map(item => item.product_id))
+  }
+
   useEffect(() => {
     setMounted(true);
     fetchProducts();
+    fetchWishlist();
   }, [])
 
   // Extract unique values for filters
@@ -346,8 +353,7 @@ const ProductsPage = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className="lg:hidden flex items-center gap-2 px-4 py-2 border-2 border-gray-300 rounded-lg hover:border-primary transition-colors"
-                  >
+                    className="lg:hidden flex items-center gap-2 px-4 py-2 border-2 border-gray-300 rounded-lg hover:border-primary transition-colors">
                     <Filter className="w-4 h-4" />
                     Filters
                     {activeFiltersCount > 0 && (
@@ -371,23 +377,6 @@ const ProductsPage = () => {
                     <option value="discount">Best Discount</option>
                     <option value="newest">Newest First</option>
                   </select>
-
-                  <div className="flex items-center gap-2 border-2 border-gray-300 rounded-lg p-1">
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-primary text-white' : 'hover:bg-gray-100'
-                        }`}
-                    >
-                      <Grid className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setViewMode('list')}
-                      className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-primary text-white' : 'hover:bg-gray-100'
-                        }`}
-                    >
-                      <List className="w-4 h-4" />
-                    </button>
-                  </div>
                 </div>
               </div>
 
@@ -447,78 +436,87 @@ const ProductsPage = () => {
                 </div>
               ) : (
                 <div
-                  className={
-                    viewMode === 'grid'
-                      ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
-                      : 'flex flex-col gap-6'}>
-                  {filteredProducts.map(product => (
-                    <div
-                      key={product.id}
-                      onClick={() => router.push(`/product/${product.id}`)}
-                      className={`group cursor-pointer ${viewMode === 'list'
-                        ? 'flex flex-row gap-4 border-b pb-6'
-                        : 'flex flex-col'
-                        }`}>
-                      {/* Product Image */}
-                      <div
-                        className={`relative bg-gray-100 rounded-lg overflow-hidden ${viewMode === 'list'
-                          ? 'w-32 h-32 md:w-40 md:h-40 flex-shrink-0'
-                          : 'aspect-[2/3]'
-                          }`}>
-                        <Image
-                          src={product.images[0]}
-                          alt={product.name}
-                          fill
-                          className="object-cover transition duration-200 group-hover:scale-110"
-                        />
-                        {product.discount > 0 && (
-                          <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-r-lg text-xs font-semibold">
-                            -{product.discount}%
-                          </div>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            // Add to wishlist logic
-                          }}
-                          className="absolute top-2 right-2 p-2 rounded-full bg-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
-                        >
-                          <Heart className="w-4 h-4 text-gray-600" />
-                        </button>
-                      </div>
+                  className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
+                  {filteredProducts.map(product => {
 
-                      {/* Product Info */}
-                      <div className={viewMode === 'list' ? 'flex-1' : 'mt-3'}>
-                        <span className="text-xs text-gray-600 block mb-1">{product.brand}</span>
-                        <h3 className={`font-semibold line-clamp-1 group-hover:text-primary transition-colors ${viewMode === 'list' ? 'text-base' : 'text-sm'
-                          }`}>
-                          {product.name}
-                        </h3>
-                        {viewMode === 'list' && (
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                            {product.category} • {product.gender}
-                          </p>
-                        )}
-                        
-                        <div className={`flex items-center gap-2 mt-2 ${viewMode === 'list' ? 'flex-col items-start' : ''
-                          }`}>
-                          <span className={`font-bold ${viewMode === 'list' ? 'text-lg' : 'text-sm'}`}>
-                            {formatPrice(product.price)}
-                          </span>
-                          {product.price < product.cost && (
-                            <>
-                              <span className="text-xs text-gray-400 line-through">
-                                {formatPrice(product.cost)}
-                              </span>
-                              <span className="text-xs text-primary font-semibold">
-                                {((product.cost - product.price) / product.cost * 100).toFixed(0)}% OFF
-                              </span>
-                            </>
+                    const isInWishlist = isWishlisted.includes(product.id);
+
+                    return (
+                      <div
+                        key={product.id}
+                        onClick={() => router.push(`/product/${product.id}`)}
+                        className={`group cursor-pointer flex flex-col`}>
+                        {/* Product Image */}
+                        <div
+                          className={`relative bg-gray-100 rounded-lg overflow-hidden aspect-[2/3]`}>
+                          <Image
+                            src={product.images[0]}
+                            alt={product.name}
+                            fill
+                            className="object-cover transition duration-200 group-hover:scale-110"
+                          />
+                          {product.discount > 0 && (
+                            <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-r-lg text-xs font-semibold">
+                              -{product.discount}%
+                            </div>
                           )}
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              if (isInWishlist) {
+                                // Remove from wishlist
+                                const data = await supabase.from("wishlist")
+                                  .delete()
+                                  .eq("product_id", product.id)
+                                  .eq("user_id", user.id)
+
+                                if (!data.error) {
+                                  fetchWishlist();
+                                }
+                              } else {
+                                // Add to wishlist
+                                const data = await supabase.from("wishlist")
+                                  .insert({
+                                    product_id: product.id,
+                                    user_id: user.id
+                                  })
+
+                                if (!data.error) {
+                                  fetchWishlist();
+                                }
+                              }
+                            }}
+                            className="absolute top-2 right-2 p-2 rounded-full bg-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110">
+                            <Heart className={`w-4 h-4 text-gray-600 ${isInWishlist ? 'fill-red-500' : ''} transition-all duration-500`} />
+                          </button>
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="mt-3">
+                          <span className="text-xs text-gray-600 block mb-1">{product.brand}</span>
+                          <h3 className={`font-semibold line-clamp-1 group-hover:text-primary transition-colors text-sm`}>
+                            {product.name}
+                          </h3>
+
+                          <div className={`flex items-center gap-2 mt-2 `}>
+                            <span className={`font-bold text-sm`}>
+                              {formatPrice(product.price)}
+                            </span>
+                            {product.price < product.cost && (
+                              <>
+                                <span className="text-xs text-gray-400 line-through">
+                                  {formatPrice(product.cost)}
+                                </span>
+                                <span className="text-xs text-primary font-semibold">
+                                  {((product.cost - product.price) / product.cost * 100).toFixed(0)}% OFF
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
