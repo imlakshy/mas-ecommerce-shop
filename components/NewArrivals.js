@@ -1,23 +1,48 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Button } from './ui/button'
 import { useState } from 'react'
+import { supabase } from '@/lib/createSupabaseClient'
+import { useRouter } from 'next/navigation'
 
 const NewArrivals = () => {
+    const router = useRouter()
 
     const [activeButton, setactiveButton] = useState("mens");
-    const [womensFashion, setwomensFashion] = useState([]);
-    const [isFetched, setIsFetched] = useState(false);
+    const [womensFashion, setWomensFashion] = useState([]);
+    const [mensFashion, setMensFashion] = useState([]);
+    const [discountDeals, setDiscountDeals] = useState([]);
 
-    const fetchWomen = async () => {
+    const formatPrice = (price) => {
+        if (price == null) return "₹—";
+        return `₹${Number(price).toLocaleString("en-IN")}`;
+    };
 
-        if (!isFetched) {
-            const res = await fetch('https://fakestoreapi.com/products');
-            const data = await res.json();
-            setwomensFashion(data);
-            setIsFetched(true);
-            console.log("fetched");
+
+    useEffect(() => {
+        const fetchWomens = async () => {
+            const { data, error } = await supabase.from('products').select("*").eq("gender", "Women")
+            if (!error) setWomensFashion(data);
         }
-    }
+
+        const fetchMens = async () => {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*')
+                .eq("gender", "Men")
+                .limit(8);
+
+            if (!error) setMensFashion(data);
+        };
+
+        const fetchDiscounts = async () => {
+            const { data, error } = await supabase.from("on_discount").select("*").limit(8);
+            if (!error) setDiscountDeals(data);
+        }
+
+        fetchWomens();
+        fetchMens();
+        fetchDiscounts();
+    }, [])
 
     return (
         <div id='newArrivals' className="newArrival">
@@ -29,199 +54,100 @@ const NewArrivals = () => {
                         <p className="mx-auto max-w-screen-md text-center md:text-lg text-gray-600">This is a section of some simple filler text, also known as placeholder text. It shares some characteristics of a real written text but is random or otherwise generated.</p>
                     </div>
 
-                    <div id='buttons' className="inline-flex w-[90vw] lg:w-[1250px] justify-between items-center gap-10 mb-10 overflow-x-auto whitespace-nowrap">
+                    <div id='buttons' className="inline-flex w-[90vw] lg:w-[1250px] justify-around items-center gap-10 mb-10 overflow-x-auto whitespace-nowrap">
                         <div className={`text-sm md:text-lg text-center rounded-lg p-2 md:px-4 cursor-pointer   transition duration-300 ${activeButton === "mens" ? "text-white bg-primary" : "text-gray-500"}`} onClick={() => setactiveButton("mens")}>Men&apos;s Fashion</div>
 
-                        <div className={`text-sm md:text-lg text-center rounded-lg p-2 md:px-4 cursor-pointer   transition duration-300 ${activeButton === "womens" ? "text-white bg-primary" : "text-gray-500"}`} onClick={() => { setactiveButton("womens"); fetchWomen() }}>Women&apos;s Fashion</div>
-
-                        <div className={`text-sm md:text-lg text-center rounded-lg p-2 md:px-4 cursor-pointer   transition duration-300 ${activeButton === "womensAccess" ? "text-white bg-primary" : "text-gray-500"}`} onClick={() => setactiveButton("womensAccess")}>Women Accessories</div>
-
-                        <div className={`text-sm md:text-lg text-center rounded-lg p-2 md:px-4 cursor-pointer   transition duration-300 ${activeButton === "mensAccess" ? "text-white bg-primary" : "text-gray-500"}`} onClick={() => setactiveButton("mensAccess")}>Men Accessories</div>
+                        <div className={`text-sm md:text-lg text-center rounded-lg p-2 md:px-4 cursor-pointer   transition duration-300 ${activeButton === "womens" ? "text-white bg-primary" : "text-gray-500"}`} onClick={() => { setactiveButton("womens") }}>Women&apos;s Fashion</div>
 
                         <div className={`text-sm md:text-lg text-center rounded-lg p-2 md:px-4 cursor-pointer   transition duration-300 ${activeButton === "discount" ? "text-white bg-primary" : "text-gray-500"}`} onClick={() => setactiveButton("discount")}>Discount Deals</div>
                     </div>
 
-                    {activeButton === "mens" && (<div id='productsSection' className="products grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        <div>
-                            <a href="#" className="group relative block h-70 w-auto overflow-hidden rounded-t-lg bg-gray-100">
-                                <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&q=75&fit=crop&crop=top&w=600&h=700" loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
+                    {activeButton === "mens" && (<>
+                        <div id='productsSection' className="products grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            {mensFashion.map((item) => (
+                                <div onClick={() => router.push(`/product/${item.id}`)} className='cursor-pointer'>
+                                    <div className="group relative block h-50 aspect-[2/3] overflow-hidden rounded-t-lg bg-gray-100">
+                                        <img src={item.images[0]} loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
 
-                                <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">-50%</span>
-                            </a>
+                                        <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">{item.price < item.cost ? `-${((item.cost - item.price) / item.cost * 100).toFixed(0)}%` : 'New'}</span>
+                                    </div>
 
-                            <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
-                                <div className="flex flex-col">
-                                    <a href="#" className="font-bold text-gray-800 transition duration-100 hover:text-gray-500 lg:text-lg">Fancy Outfit</a>
-                                    <span className="text-sm text-gray-500 lg:text-base">by Fancy Brand</span>
+                                    <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
+                                        <div className="flex flex-col">
+                                            <a href="#" className="font-bold text-gray-800 transition duration-100 line-clamp-1 hover:text-gray-500 ">{item.name}</a>
+                                            <span className="text-sm text-gray-500 lg:text-base">by {item.brand}</span>
+                                        </div>
+
+                                        <div className="flex flex-col items-end">
+                                            <span className="font-bold ">{formatPrice(item.price)}</span>
+
+                                            {item.cost > item.price && <span className="text-sm text-red-500 line-through">{formatPrice(item.cost)}</span>}
+                                        </div>
+                                    </div>
                                 </div>
-
-                                <div className="flex flex-col items-end">
-                                    <span className="font-bold text-gray-600 lg:text-lg">$19.99</span>
-                                    <span className="text-sm text-red-500 line-through">$39.99</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <a href="#" className="group relative block h-70 w-auto overflow-hidden rounded-t-lg bg-gray-100">
-                                <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&q=75&fit=crop&crop=top&w=600&h=700" loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
-
-                                <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">-50%</span>
-                            </a>
-
-                            <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
-                                <div className="flex flex-col">
-                                    <a href="#" className="font-bold text-gray-800 transition duration-100 hover:text-gray-500 lg:text-lg">Fancy Outfit</a>
-                                    <span className="text-sm text-gray-500 lg:text-base">by Fancy Brand</span>
-                                </div>
-
-                                <div className="flex flex-col items-end">
-                                    <span className="font-bold text-gray-600 lg:text-lg">$19.99</span>
-                                    <span className="text-sm text-red-500 line-through">$39.99</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <a href="#" className="group relative block h-70 w-auto overflow-hidden rounded-t-lg bg-gray-100">
-                                <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&q=75&fit=crop&crop=top&w=600&h=700" loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
-
-                                <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">-50%</span>
-                            </a>
-
-                            <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
-                                <div className="flex flex-col">
-                                    <a href="#" className="font-bold text-gray-800 transition duration-100 hover:text-gray-500 lg:text-lg">Fancy Outfit</a>
-                                    <span className="text-sm text-gray-500 lg:text-base">by Fancy Brand</span>
-                                </div>
-
-                                <div className="flex flex-col items-end">
-                                    <span className="font-bold text-gray-600 lg:text-lg">$19.99</span>
-                                    <span className="text-sm text-red-500 line-through">$39.99</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <a href="#" className="group relative block h-70 w-auto overflow-hidden rounded-t-lg bg-gray-100">
-                                <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&q=75&fit=crop&crop=top&w=600&h=700" loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
-
-                                <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">-50%</span>
-                            </a>
-
-                            <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
-                                <div className="flex flex-col">
-                                    <a href="#" className="font-bold text-gray-800 transition duration-100 hover:text-gray-500 lg:text-lg">Fancy Outfit</a>
-                                    <span className="text-sm text-gray-500 lg:text-base">by Fancy Brand</span>
-                                </div>
-
-                                <div className="flex flex-col items-end">
-                                    <span className="font-bold text-gray-600 lg:text-lg">$19.99</span>
-                                    <span className="text-sm text-red-500 line-through">$39.99</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <a href="#" className="group relative block h-70 w-auto overflow-hidden rounded-t-lg bg-gray-100">
-                                <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&q=75&fit=crop&crop=top&w=600&h=700" loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
-
-                                <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">-50%</span>
-                            </a>
-
-                            <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
-                                <div className="flex flex-col">
-                                    <a href="#" className="font-bold text-gray-800 transition duration-100 hover:text-gray-500 lg:text-lg">Fancy Outfit</a>
-                                    <span className="text-sm text-gray-500 lg:text-base">by Fancy Brand</span>
-                                </div>
-
-                                <div className="flex flex-col items-end">
-                                    <span className="font-bold text-gray-600 lg:text-lg">$19.99</span>
-                                    <span className="text-sm text-red-500 line-through">$39.99</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <a href="#" className="group relative block h-70 w-auto overflow-hidden rounded-t-lg bg-gray-100">
-                                <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&q=75&fit=crop&crop=top&w=600&h=700" loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
-
-                                <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">-50%</span>
-                            </a>
-
-                            <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
-                                <div className="flex flex-col">
-                                    <a href="#" className="font-bold text-gray-800 transition duration-100 hover:text-gray-500 lg:text-lg">Fancy Outfit</a>
-                                    <span className="text-sm text-gray-500 lg:text-base">by Fancy Brand</span>
-                                </div>
-
-                                <div className="flex flex-col items-end">
-                                    <span className="font-bold text-gray-600 lg:text-lg">$19.99</span>
-                                    <span className="text-sm text-red-500 line-through">$39.99</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <a href="#" className="group relative block h-70 w-auto overflow-hidden rounded-t-lg bg-gray-100">
-                                <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&q=75&fit=crop&crop=top&w=600&h=700" loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
-
-                                <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">-50%</span>
-                            </a>
-
-                            <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
-                                <div className="flex flex-col">
-                                    <a href="#" className="font-bold text-gray-800 transition duration-100 hover:text-gray-500 lg:text-lg">Fancy Outfit</a>
-                                    <span className="text-sm text-gray-500 lg:text-base">by Fancy Brand</span>
-                                </div>
-
-                                <div className="flex flex-col items-end">
-                                    <span className="font-bold text-gray-600 lg:text-lg">$19.99</span>
-                                    <span className="text-sm text-red-500 line-through">$39.99</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <a href="#" className="group relative block h-70 w-auto overflow-hidden rounded-t-lg bg-gray-100">
-                                <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&q=75&fit=crop&crop=top&w=600&h=700" loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
-
-                                <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">-50%</span>
-                            </a>
-
-                            <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
-                                <div className="flex flex-col">
-                                    <a href="#" className="font-bold text-gray-800 transition duration-100 hover:text-gray-500 lg:text-lg">Fancy Outfit</a>
-                                    <span className="text-sm text-gray-500 lg:text-base">by Fancy Brand</span>
-                                </div>
-
-                                <div className="flex flex-col items-end">
-                                    <span className="font-bold text-gray-600 lg:text-lg">$19.99</span>
-                                    <span className="text-sm text-red-500 line-through">$39.99</span>
-                                </div>
-                            </div>
+                            ))}
                         </div>
 
                         <Button className="text-center w-[207px] mt-4 text-lg">View More</Button>
-                    </div>)}
+                    </>)}
 
-                    {activeButton === "womens" && (
+                    {activeButton === "womens" && (<>
+                        <div id='productsSection' className="products grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            {womensFashion.map((item) => (
+                                <div>
+                                    <div className="group relative block h-50 aspect-[2/3] overflow-hidden rounded-t-lg bg-gray-100">
+                                        <img src={item.images[0]} loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
 
-                        womensFashion.map((item, index) => (
-                            <div key={index}>
-                                {item.title}
-                            </div>
-                        ))
+                                        <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">{item.price < item.cost ? `-${((item.cost - item.price) / item.cost * 100).toFixed(0)}%` : 'New'}</span>
+                                    </div>
 
-                    )}
+                                    <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
+                                        <div className="flex flex-col">
+                                            <a href="#" className="font-bold text-gray-800 transition duration-100 line-clamp-1 hover:text-gray-500 ">{item.name}</a>
+                                            <span className="text-sm text-gray-500 lg:text-base">by {item.brand}</span>
+                                        </div>
 
-                    {activeButton === "womensAccess" && (
-                        <div className='transition duration-300'>Womens Access</div>
-                    )}
-                    {activeButton === "mensAccess" && (
-                        <div className='transition duration-300'>Mens Acess</div>
-                    )}
-                    {activeButton === "discount" && (
-                        <div className='transition duration-300'>Bumper Discount</div>
-                    )}
+                                        <div className="flex flex-col items-end">
+                                            <span className="font-bold ">{formatPrice(item.price)}</span>
+
+                                            {item.cost > item.price && <span className="text-sm text-red-500 line-through">{formatPrice(item.cost)}</span>}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                        </div>
+                        <Button className="text-center w-[207px] mt-4 text-lg">View More</Button>
+                    </>)}
+
+                    {activeButton === "discount" && (<>
+                        <div id='productsSection' className="products grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            {discountDeals.map((item) => (
+                                <div>
+                                    <div className="group relative block h-50 aspect-[2/3] overflow-hidden rounded-t-lg bg-gray-100">
+                                        <img src={item.images[0]} loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
+
+                                        <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">{item.price < item.cost ? `-${((item.cost - item.price) / item.cost * 100).toFixed(0)}%` : 'New'}</span>
+                                    </div>
+
+                                    <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
+                                        <div className="flex flex-col">
+                                            <a href="#" className="font-bold text-gray-800 transition duration-100 line-clamp-1 hover:text-gray-500 ">{item.name}</a>
+                                            <span className="text-sm text-gray-500 lg:text-base">by {item.brand}</span>
+                                        </div>
+
+                                        <div className="flex flex-col items-end">
+                                            <span className="font-bold ">{formatPrice(item.price)}</span>
+
+                                            {item.cost > item.price && <span className="text-sm text-red-500 line-through">{formatPrice(item.cost)}</span>}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <Button className="text-center w-[207px] mt-4 text-lg">View More</Button>
+                    </>)}
 
 
                 </div>

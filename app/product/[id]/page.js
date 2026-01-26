@@ -186,12 +186,6 @@ const ProductDetailPage = () => {
                                     priority
                                 />
 
-                                {product?.discount > 0 && (
-                                    <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1.5 rounded-r-lg text-sm font-semibold">
-                                        -{product?.discount}%
-                                    </div>
-                                )}
-
                                 <button
                                     onClick={() => handleAddToWishlist(product.id)}
                                     className={`absolute top-4 right-4 p-2 rounded-full bg-white shadow-lg transition-all hover:scale-110 ${isWishlisted ? 'text-red-500' : 'text-gray-600'}`}>
