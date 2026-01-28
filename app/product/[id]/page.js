@@ -9,6 +9,7 @@ import { Heart, LucideShoppingBag, Minus, Plus, Share2, Check, Star } from 'luci
 import { supabase } from '@/lib/createSupabaseClient'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
+import CartAddedPopup from '@/components/CartAddedPopup'
 
 const ProductDetailPage = () => {
     const { user } = useAuth();
@@ -23,6 +24,9 @@ const ProductDetailPage = () => {
     const [showSizeGuide, setShowSizeGuide] = useState(false)
     const [product, setProduct] = useState(null);
     const [relatedProduct, setRelatedProduct] = useState([]);
+    const [showCartPopup, setShowCartPopup] = useState(true)
+    const [popupData, setPopupData] = useState(null)
+    const [isInCart, setIsInCart] = useState(false)
 
     const fetchProductData = async () => {
         const { data, error } = await supabase
@@ -52,6 +56,27 @@ const ProductDetailPage = () => {
             setRelatedProduct(data);
         }
     }
+
+    const fetchInCartStatus = async (sze) => {
+        if (!user) return;
+
+        const { data, error } = await supabase
+            .from("cart")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("product_id", id)
+            .eq("size", sze)
+            .limit(1);
+
+        if (error) {
+            console.error(error);
+            return;
+        }
+        if(data[0]?.qty>1) setQuantity(data[0].qty);
+        setIsInCart(data.length > 0);
+        
+    };
+
 
     useEffect(() => {
         const init = async () => {
@@ -85,6 +110,8 @@ const ProductDetailPage = () => {
     }, [user]);
 
     const handleAddToCart = async (productId) => {
+        if(isInCart) router.push('/cart')
+
         if (!selectedSize) {
             alert('Please select a size')
             return
@@ -94,7 +121,7 @@ const ProductDetailPage = () => {
             return
         }
 
-        const {data , error} = await supabase.from("cart")
+        const { data, error } = await supabase.from("cart")
             .upsert({
                 user_id: user.id,
                 product_id: productId,
@@ -105,14 +132,12 @@ const ProductDetailPage = () => {
             })
 
         if (!error) {
-            toast.success('Product added to cart!')
+            setPopupData({ product, qty: quantity, size: selectedSize, color: selectedColor })
+            setShowCartPopup(true)
+            fetchInCartStatus(selectedSize)
             setTimeout(() => {
-                router.push('/cart')
-            }, 1500);
-        }
-        
-        if(error?.code === "23505"){
-            toast.error('Product already in cart!')
+                // setShowCartPopup(false)
+            }, 4000);
         }
     }
     const handleAddToWishlist = async (productId) => {
@@ -198,7 +223,7 @@ const ProductDetailPage = () => {
                                 <div className="flex gap-3">
                                     {product?.images.map((image, index) => (
                                         <button
-                                            key={index}
+                                            key={image}
                                             onClick={() => setSelectedImage(index)}
                                             className={`relative flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index ? 'border-primary' : 'border-gray-200'}`}>
                                             <Image
@@ -252,7 +277,7 @@ const ProductDetailPage = () => {
                                 <div className="flex items-center justify-between mb-3">
                                     <label className="text-sm font-semibold">Size</label>
                                     <button
-                                        onClick={() => {setShowSizeGuide(!showSizeGuide)}}
+                                        onClick={() => { setShowSizeGuide(!showSizeGuide) }}
                                         className="text-sm text-primary hover:underline">
                                         Size Guide
                                     </button>
@@ -261,7 +286,10 @@ const ProductDetailPage = () => {
                                     {product?.sizes.map((size) => (
                                         <button
                                             key={size}
-                                            onClick={() => setSelectedSize(size)}
+                                            onClick={() => {
+                                                setSelectedSize(size)
+                                                fetchInCartStatus(size);
+                                            }}
                                             className={`px-4 py-2 border-2 rounded-lg text-sm font-medium transition-all ${selectedSize === size
                                                 ? 'border-primary bg-primary text-white'
                                                 : 'border-gray-300 hover:border-gray-400'
@@ -286,9 +314,9 @@ const ProductDetailPage = () => {
                                 <div className="mb-6">
                                     <label className="text-sm font-semibold block mb-3">Color</label>
                                     <div className="flex gap-3">
-                                        {product?.colors.map((color, index) => (
+                                        {product?.colors.map((color) => (
                                             <button
-                                                key={index}
+                                                key={color}
                                                 onClick={() => setSelectedColor(color)}
                                                 className={`relative w-10 h-10 rounded-full border-2 transition-all ${selectedColor === color
                                                     ? 'border-primary scale-110'
@@ -350,7 +378,7 @@ const ProductDetailPage = () => {
                                         product?.stock === 0 || !selectedSize || (product?.colors?.length > 0 && !selectedColor)}
                                     className="flex-1 bg-primary text-white py-6 text-base font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
                                     <LucideShoppingBag className="w-5 h-5 mr-2" />
-                                    Add to Cart
+                                    {isInCart ? 'Go to Cart' : 'Add to Cart'}
                                 </Button>
                                 <Button
                                     onClick={() => handleAddToWishlist(product.id)}
@@ -419,8 +447,7 @@ const ProductDetailPage = () => {
                                                 <Star
                                                     key={i}
                                                     className={`w-3 h-3 ${i < 5 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                                                        }`}
-                                                />
+                                                        }`}/>
                                             ))}
                                             <span className="text-xs text-gray-500 ml-2">2 days ago</span>
                                         </div>
@@ -439,42 +466,55 @@ const ProductDetailPage = () => {
                     </div>
 
                     {/* Related Products */}
-                    <div className="border-t pt-12">
-                        <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {relatedProduct?.map((item) => (
-                                <div
-                                    key={item}
-                                    className="cursor-pointer group"
-                                    onClick={() => router.push(`/product/${item.id}`)}
-                                >
-                                    <div className="relative aspect-[2/3] bg-gray-100 rounded-lg overflow-hidden mb-3">
-                                        <Image
-                                            src={item.images[0]}
-                                            alt="Related product"
-                                            fill
-                                            className="object-cover transition duration-200 group-hover:scale-110"
-                                        />
-                                        <div className="absolute top-2 bg-red-500 text-white px-2 py-1 rounded-r-lg text-xs font-semibold">
-                                            {item.price < item.cost ? `-${((item.cost - item.price) / item.cost * 100).toFixed(0)}%` : 'New'}
+                    {relatedProduct.length > 0 && (
+                        <div className="border-t pt-12">
+                            <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {relatedProduct?.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="cursor-pointer group"
+                                        onClick={() => router.push(`/product/${item.id}`)}>
+
+                                        <div className="relative aspect-[2/3] bg-gray-100 rounded-lg overflow-hidden mb-3">
+                                            <Image
+                                                src={item.images[0]}
+                                                alt="Related product"
+                                                fill
+                                                className="object-cover transition duration-200 group-hover:scale-110"
+                                            />
+                                            <div className="absolute top-2 bg-red-500 text-white px-2 py-1 rounded-r-lg text-xs font-semibold">
+                                                {item.price < item.cost ? `-${((item.cost - item.price) / item.cost * 100).toFixed(0)}%` : 'New'}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-xs text-gray-600">{item.brand}</span>
+                                            <span className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
+                                                {item.name}
+                                            </span>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="font-bold text-sm">{formatPrice(item.price)}</span>
+                                                <span className="text-xs text-gray-400 line-through">{formatPrice(item.cost)}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-xs text-gray-600">{item.brand}</span>
-                                        <span className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
-                                            {item.name}
-                                        </span>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="font-bold text-sm">{formatPrice(item.price)}</span>
-                                            <span className="text-xs text-gray-400 line-through">{formatPrice(item.cost)}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
+
+            {/* Cart added confirmation popup */}
+            <CartAddedPopup
+                open={showCartPopup}
+                product={popupData?.product}
+                qty={popupData?.qty}
+                size={popupData?.size}
+                color={popupData?.color}
+                onClose={() => setShowCartPopup(false)}
+                onGoToCart={() => router.push('/cart')}
+            />
 
             <Footer />
         </div>

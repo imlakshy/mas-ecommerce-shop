@@ -248,8 +248,8 @@ const CartPage = () => {
                 />
               </div>
               <div className='flex flex-col justify-center flex-1 relative'>
-                <span className='text-sm text-gray-700'>{item.products.brand}</span>
-                <span className='line-clamp-1 pb-2 lg:pb-4'>{item.products.name}</span>
+                <span className='text-xs md:text-sm text-gray-700'>{item.products.brand}</span>
+                <span className='text-sm md:text-base line-clamp-1 pb-2 lg:pb-4'>{item.products.name}</span>
 
                 {item.products.color && <span className='text-gray-600 font-light text-xs'>Color: {item.color}</span>}
 
@@ -311,26 +311,30 @@ const CartPage = () => {
                   <span className='cursor-pointer hover:text-black' onClick={() => handleMoveToWishlist(item.id, item.products.id)}>Move to wishlist</span>
                 </div>
 
-                <div className='flex flex-col absolute right-2 items-end'>
+                <div className='text-xs md:text-base flex flex-col absolute right-2 items-end'>
                   {item.products.price < item.products.cost && <span className='text-gray-400 line-through text-xs text-extralight'>{formatPrice(item.products.cost * item.qty)}</span>}
 
-                  <span className=''>{formatPrice(item.products.price * item.qty)}</span>
+                  <span className='text-sm md:text-base'>{formatPrice(item.products.price * item.qty)}</span>
                 </div>
 
               </div>
             </div>
           ))}
 
-          <div className='pt-8 pb-4'>
+          {cartItems.length === 0 && (
+            <div className='pt-8 pb-4'>
             <span className='text-3xl font-bold'>Nothing else here</span><br />
             <span className='text-gray-500'>Find something special to add...</span>
           </div>
+          )}
         </div>
 
         {/* Customer Information & Order Summary */}
-        <div className='w-full md:w-1/4 min-w-[330px] md:min-w-[270px] flex flex-col'>
+        <div
+        className='pb-24 w-full md:w-1/4 min-w-[300px] md:min-w-[270px] flex flex-col'>
           {/* Customer Information */}
-          <div className='flex flex-col border-black h-max'>
+          <div 
+          className='bg-[#f5f5f5] md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none flex flex-col border-black h-max'>
             <span className='text-lg sm:text-2xl font-light pb-2'>Customer Information</span>
 
             <div className='flex flex-col gap-2 text-xs'>

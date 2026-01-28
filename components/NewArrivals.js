@@ -65,7 +65,7 @@ const NewArrivals = () => {
                     {activeButton === "mens" && (<>
                         <div id='productsSection' className="products grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {mensFashion.map((item) => (
-                                <div onClick={() => router.push(`/product/${item.id}`)} className='cursor-pointer'>
+                                <div key={item.id} onClick={() => router.push(`/product/${item.id}`)} className='cursor-pointer'>
                                     <div className="group relative block h-50 aspect-[2/3] overflow-hidden rounded-t-lg bg-gray-100">
                                         <img src={item.images[0]} loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
 
@@ -94,7 +94,7 @@ const NewArrivals = () => {
                     {activeButton === "womens" && (<>
                         <div id='productsSection' className="products grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {womensFashion.map((item) => (
-                                <div>
+                                <div key={item.id}>
                                     <div className="group relative block h-50 aspect-[2/3] overflow-hidden rounded-t-lg bg-gray-100">
                                         <img src={item.images[0]} loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
 
@@ -123,7 +123,7 @@ const NewArrivals = () => {
                     {activeButton === "discount" && (<>
                         <div id='productsSection' className="products grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {discountDeals.map((item) => (
-                                <div>
+                                <div key={item.id}>
                                     <div className="group relative block h-50 aspect-[2/3] overflow-hidden rounded-t-lg bg-gray-100">
                                         <img src={item.images[0]} loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
 
