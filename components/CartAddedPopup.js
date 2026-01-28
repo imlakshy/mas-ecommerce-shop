@@ -16,16 +16,13 @@ export default function CartAddedPopup({ open, product, qty = 1, size, color, on
 
     return (
         <>
-            {/* Backdrop */}
             <div
                 className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                    }`}
-            />
+                    }`} />
 
-            {/* Toast-style popup at top-right below navbar */}
-            <div className={`fixed top-24 right-1/2 md:right-4 z-50 max-w-sm transition-all duration-300 transform ${isVisible
-                    ? 'translate-x-1/2 md:translate-x-0 opacity-100'
-                    : 'translate-x-[120%] opacity-0'
+            <div className={`fixed top-24 right-1/2 md:right-4 z-50 min-w-[355px] transition-all duration-300 transform ${isVisible
+                ? 'translate-x-1/2 md:translate-x-0 opacity-100'
+                : 'translate-x-[120%] opacity-0'
                 }`}>
                 <div className="bg-white rounded-xl shadow-xl border border-green-100 overflow-hidden">
                     {/* Success header */}
@@ -34,8 +31,7 @@ export default function CartAddedPopup({ open, product, qty = 1, size, color, on
                         <span className="text-sm font-semibold text-green-700">Added to Cart</span>
                         <button
                             onClick={onClose}
-                            className="ml-auto p-1 hover:bg-green-100 rounded-lg transition-colors"
-                        >
+                            className="ml-auto p-1 hover:bg-green-100 rounded-lg transition-colors">
                             <X className="w-4 h-4 text-gray-500" />
                         </button>
                     </div>

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import { Heart, LucideShoppingBag, Minus, Plus, Share2, Check, Star } from 'lucide-react'
+import { Heart, LucideShoppingBag, Minus, Plus, Share2, Check, Star, ArrowLeft, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/createSupabaseClient'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
@@ -24,7 +24,7 @@ const ProductDetailPage = () => {
     const [showSizeGuide, setShowSizeGuide] = useState(false)
     const [product, setProduct] = useState(null);
     const [relatedProduct, setRelatedProduct] = useState([]);
-    const [showCartPopup, setShowCartPopup] = useState(true)
+    const [showCartPopup, setShowCartPopup] = useState(false)
     const [popupData, setPopupData] = useState(null)
     const [isInCart, setIsInCart] = useState(false)
 
@@ -72,10 +72,23 @@ const ProductDetailPage = () => {
             console.error(error);
             return;
         }
-        if(data[0]?.qty>1) setQuantity(data[0].qty);
+        if (data[0]?.qty > 1) setQuantity(data[0].qty);
         setIsInCart(data.length > 0);
-        
+
     };
+
+    const handlePrev = () => {
+        setSelectedImage((prev) =>
+            prev === 0 ? product.images.length - 1 : prev - 1
+        );
+    };
+
+    const handleNext = () => {
+        setSelectedImage((prev) =>
+            prev === product.images.length - 1 ? 0 : prev + 1
+        );
+    };
+
 
 
     useEffect(() => {
@@ -110,7 +123,7 @@ const ProductDetailPage = () => {
     }, [user]);
 
     const handleAddToCart = async (productId) => {
-        if(isInCart) router.push('/cart')
+        if (isInCart) router.push('/cart')
 
         if (!selectedSize) {
             alert('Please select a size')
@@ -136,7 +149,7 @@ const ProductDetailPage = () => {
             setShowCartPopup(true)
             fetchInCartStatus(selectedSize)
             setTimeout(() => {
-                // setShowCartPopup(false)
+                setShowCartPopup(false)
             }, 4000);
         }
     }
@@ -187,9 +200,9 @@ const ProductDetailPage = () => {
       ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             <Navbar />
 
-            <div className="pt-24 pb-12 px-5 lg:px-[2vw] xl:px-[10vw]">
+            <div className="pt-24 pb-24 md:pb-12 px-5 lg:px-[2vw] xl:px-[10vw]">
                 {/* Breadcrumb */}
-                <div className="mb-6 text-sm text-gray-600">
+                <div className="hidden md:block mb-6 text-sm text-gray-600">
                     <span className="cursor-pointer hover:text-primary cur" onClick={() => router.push('/')}>Home</span>
                     <span className="mx-2">/</span>
                     <span className="cursor-pointer hover:text-primary" onClick={() => router.push('/products')}>{product?.category}</span>
@@ -198,28 +211,32 @@ const ProductDetailPage = () => {
                 </div>
 
                 <div className="max-w-[1400px] mx-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-16">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-6 md:mb-16">
                         {/* Product Images */}
                         <div className="flex flex-col gap-4 items-center">
                             {/* Main Image */}
-                            <div className="relative w-[60%] aspect-[2/3] bg-gray-100 rounded-lg overflow-hidden">
-                                <Image
-                                    src={product?.images[selectedImage]}
-                                    alt={product?.name}
-                                    fill
-                                    className="object-cover"
-                                    priority
-                                />
+                            <div className='w-full md:w-[70%] flex items-center gap-4 md:gap-6'>
+                                <ArrowLeft onClick={handlePrev} className='cursor-pointer w-8 h-8' />
+                                <div className="relative w-full aspect-[2/3] bg-gray-100 rounded-lg overflow-hidden">
+                                    <Image
+                                        src={product?.images[selectedImage]}
+                                        alt={product?.name}
+                                        fill
+                                        className="object-cover"
+                                        priority
+                                    />
 
-                                <button
-                                    onClick={() => handleAddToWishlist(product.id)}
-                                    className={`absolute top-4 right-4 p-2 rounded-full bg-white shadow-lg transition-all hover:scale-110 ${isWishlisted ? 'text-red-500' : 'text-gray-600'}`}>
-                                    <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
-                                </button>
+                                    <button
+                                        onClick={() => handleAddToWishlist(product.id)}
+                                        className={`absolute top-4 right-4 p-2 rounded-full bg-white shadow-lg transition-all hover:scale-110 ${isWishlisted ? 'text-red-500' : 'text-gray-600'}`}>
+                                        <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
+                                    </button>
+                                </div>
+                                <ArrowRight onClick={handleNext} className='cursor-pointer w-8 h-8' />
                             </div>
 
                             {/* Thumbnail Images */}
-                            <div className="max-w-[450px] overflow-x-auto hide-scrollbar">
+                            <div className="hidden md:block max-w-[450px] overflow-x-auto hide-scrollbar">
                                 <div className="flex gap-3">
                                     {product?.images.map((image, index) => (
                                         <button
@@ -241,15 +258,14 @@ const ProductDetailPage = () => {
                         {/* Product Details */}
                         <div className="flex flex-col">
                             {/* Brand & Name */}
-                            <div className="mb-4">
-                                <span className="text-sm text-gray-600 font-medium">{product?.brand}</span>
-                                <h1 className="text-3xl md:text-4xl font-bold mt-2 mb-3">{product?.name}</h1>
+                            <div className="mb-2 md:mb-4">
+                                <span className="text-xs md:text-sm text-gray-600 font-medium">{product?.brand}</span>
+                                <h1 className="text-xl md:text-4xl font-bold md:mt-2 mb-3">{product?.name}</h1>
                             </div>
 
                             {/* Price */}
                             <div className="mb-6">
-                                <div className="flex items-center gap-3 mb-2">
-
+                                <div className="flex items-center gap-3 md:mb-2">
                                     <span className="text-3xl font-bold">{formatPrice(product?.price)}</span>
                                     {(product?.cost > product?.price) > 0 && (
                                         <>
@@ -262,14 +278,14 @@ const ProductDetailPage = () => {
                                         </>
                                     )}
                                 </div>
-                                <span className="text-sm text-gray-600">
+                                <span className="text-xs md:text-sm text-gray-600">
                                     Inclusive of all taxes
                                 </span>
                             </div>
 
                             {/* Description */}
                             <div className="mb-6">
-                                <p className="text-gray-700 leading-relaxed line-clamp-3">{product?.description}</p>
+                                <p className="text-xs md:text-base text-gray-700 leading-relaxed line-clamp-3">{product?.description}</p>
                             </div>
 
                             {/* Size Selection */}
@@ -293,8 +309,7 @@ const ProductDetailPage = () => {
                                             className={`px-4 py-2 border-2 rounded-lg text-sm font-medium transition-all ${selectedSize === size
                                                 ? 'border-primary bg-primary text-white'
                                                 : 'border-gray-300 hover:border-gray-400'
-                                                }`}
-                                        >
+                                                }`}>
                                             {size}
                                         </button>
                                     ))}
@@ -376,15 +391,16 @@ const ProductDetailPage = () => {
                                     onClick={() => handleAddToCart(product.id)}
                                     disabled={
                                         product?.stock === 0 || !selectedSize || (product?.colors?.length > 0 && !selectedColor)}
-                                    className="flex-1 bg-primary text-white py-6 text-base font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    className="flex-1 bg-primary text-white py-3 md:py-6 text-base font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
                                     <LucideShoppingBag className="w-5 h-5 mr-2" />
                                     {isInCart ? 'Go to Cart' : 'Add to Cart'}
                                 </Button>
+                                
                                 <Button
                                     onClick={() => handleAddToWishlist(product.id)}
                                     variant="outline"
-                                    className="flex-1 border-2 border-gray-300 py-6 text-base font-semibold hover:bg-gray-50"
-                                >
+                                    className="flex-1 border-2 border-gray-300 py-2 md:py-6 text-base font-semibold hover:bg-gray-50">
+
                                     <Heart className={`w-5 h-5 mr-2 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
                                     {isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}
                                 </Button>
@@ -396,27 +412,22 @@ const ProductDetailPage = () => {
                                     await navigator.clipboard.writeText(window.location.href)
                                     toast.success('Product link copied to clipboard!')
                                 }}
-                                className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition-colors"
-                            >
+                                className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition-colors">
                                 <Share2 className="w-4 h-4" />
                                 Share this product
                             </button>
-
                         </div>
                     </div>
 
                     {/* Reviews Section */}
-                    <div className="mb-16 border-t pt-12">
+                    <div className="mb-6 border-t pt-6 md:pt-12">
                         <h2 className="text-2xl font-bold mb-6">Customer Reviews</h2>
                         <div className="space-y-6">
                             {/* Sample Review */}
                             <div className="border-b pb-6">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                        <span className="text-sm font-semibold">JD</span>
-                                    </div>
                                     <div>
-                                        <div className="font-semibold">John Doe</div>
+                                        <div className="font-semibold text-sm md:text-base mb-2">John Doe</div>
                                         <div className="flex items-center gap-1">
                                             {[...Array(5)].map((_, i) => (
                                                 <Star
@@ -429,7 +440,7 @@ const ProductDetailPage = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <p className="text-gray-700 mt-2">
+                                <p className="text-xs md:text-base text-gray-700 mt-2">
                                     Great quality hoodie! The fit is perfect and the material is very comfortable.
                                     Highly recommend this product?.
                                 </p>
@@ -437,37 +448,34 @@ const ProductDetailPage = () => {
 
                             <div className="pb-6">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                        <span className="text-sm font-semibold">JD</span>
-                                    </div>
                                     <div>
-                                        <div className="font-semibold">John Doe</div>
+                                        <div className="font-semibold text-sm md:text-base mb-2">John Doe</div>
                                         <div className="flex items-center gap-1">
                                             {[...Array(5)].map((_, i) => (
                                                 <Star
                                                     key={i}
                                                     className={`w-3 h-3 ${i < 5 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                                                        }`}/>
+                                                        }`} />
                                             ))}
                                             <span className="text-xs text-gray-500 ml-2">2 days ago</span>
                                         </div>
                                     </div>
                                 </div>
-                                <p className="text-gray-700 mt-2">
+                                <p className="text-xs md:text-base text-gray-700 mt-2">
                                     Great quality hoodie! The fit is perfect and the material is very comfortable.
                                     Highly recommend this product?.
                                 </p>
                             </div>
 
                         </div>
-                        <Button variant="outline" className="mt-6">
+                        <span className="text-gray-800 text-sm md:mt-6 cursor-pointer ">
                             View All Reviews
-                        </Button>
+                        </span>
                     </div>
 
                     {/* Related Products */}
                     {relatedProduct.length > 0 && (
-                        <div className="border-t pt-12">
+                        <div className="border-t pt-6">
                             <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {relatedProduct?.map((item) => (
@@ -516,7 +524,6 @@ const ProductDetailPage = () => {
                 onGoToCart={() => router.push('/cart')}
             />
 
-            <Footer />
         </div>
     )
 }
