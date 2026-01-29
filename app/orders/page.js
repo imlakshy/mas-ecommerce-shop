@@ -95,7 +95,7 @@ const OrdersPage = () => {
                         <img src="https://i.postimg.cc/K8VFC1p5/M-s-1.png" alt="Más" className="w-[100px]" />
                     </div>
 
-                    <div className='text-center text-4xl pt-2 font-extralight'>
+                    <div className='text-center text-3xl md:text-4xl pt-2 font-extralight'>
                         Order History
                     </div>
                 </div>
@@ -117,15 +117,15 @@ const OrdersPage = () => {
                                 <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
                                     <div className='flex flex-col gap-1'>
                                         <div className='flex items-center gap-3'>
-                                            <span className='text-lg font-semibold'>{order.order_no}</span>
+                                            <span className='md:text-lg font-semibold'>{order.order_no}</span>
                                             <span classNdateame={`text-sm font-light flex items-center gap-1 ${order.statusColor}`}>
                                                 {getStatusIcon(order.status)}
                                                 {order.status}
                                             </span>
                                         </div>
-                                        <span className='text-sm text-gray-600 font-light'>Ordered on {new Date(order.created_at).toLocaleDateString()}</span>
+                                        <span className='text-xs text-gray-600 font-light'>Ordered on {new Date(order.created_at).toLocaleDateString()}</span>
                                     </div>
-                                    <div className='flex flex-col items-end'>
+                                    <div className='flex flex-col md:items-end'>
                                         <span className='text-lg font-semibold'>{formatPrice(order.total_amount)}</span>
                                         <span className='text-xs text-gray-600 font-light'>{order.order_items.length} item(s)</span>
                                     </div>
@@ -136,19 +136,20 @@ const OrdersPage = () => {
                                     <div
                                         className='flex items-start gap-4 border-b pb-6 mb-6 cursor-pointer hover:bg-gray-50 transition-all p-2 -m-2 rounded '
                                         onClick={() => setSelectedOrder(order)}>
-                                        <div className='h-24 md:h-32 lg:h-40 relative flex-shrink-0 aspect-[2/3]'>
+                                        <div className='h-40 relative flex-shrink-0 aspect-[2/3]'>
                                             <Image
                                                 src={order.order_items[0].products.images[0]}
                                                 alt={order.order_items[0].products.name[0]}
                                                 fill
                                                 className='object-cover' />
                                         </div>
-                                        <div className='h-24 md:h-32 lg:h-40 flex justify-between flex-col flex-1 min-w-0'>
-                                            <div className='flex flex-col gap-1'>
+
+                                        <div className='h-40 flex justify-between flex-col flex-1 min-w-0'>
+                                            <div className='flex flex-col md:gap-1'>
                                                 <span className='text-sm text-gray-700'>{order.order_items[0].products.brand}</span>
                                                 <span className='text-sm font-semibold line-clamp-2'>{order.order_items[0].products.name}</span>
                                                 {order.order_items.length > 1 && (
-                                                    <span className='text-xs text-gray-600 font-light mt-1'>
+                                                    <span className='text-xs text-gray-600 font-light md:mt-1'>
                                                         +{order.order_items.length - 1} more item{order.order_items.length - 1 > 1 ? 's' : ''}
                                                     </span>
                                                 )}

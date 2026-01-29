@@ -80,7 +80,7 @@ const WishlistPage = () => {
                         <img src="https://i.postimg.cc/K8VFC1p5/M-s-1.png" alt="Más" className="w-[100px]" />
                     </div>
 
-                    <div className='text-center text-4xl pt-2 font-extralight'>
+                    <div className='text-center text-3xl md:text-4xl pt-2 font-extralight'>
                         Your Wishlist
                     </div>
                 </div>
@@ -110,8 +110,8 @@ const WishlistPage = () => {
                                     />
                                 </div>
                                 <div className='flex flex-col justify-center flex-1 relative'>
-                                    <span onClick={() => router.push(`/product/${item.id}`)} className='cursor-pointer text-sm text-gray-700'>{item.brand}</span>
-                                    <span onClick={() => router.push(`/product/${item.id}`)} className='cursor-pointer line-clamp-1 pb-2 lg:pb-4'>{item.name}</span>
+                                    <span onClick={() => router.push(`/product/${item.id}`)} className='cursor-pointer text-xs md:text-sm text-gray-700'>{item.brand}</span>
+                                    <span onClick={() => router.push(`/product/${item.id}`)} className='cursor-pointer line-clamp-1 pb-2 lg:pb-4 text-sm md:text-base'>{item.name}</span>
                                     <span className='text-xs text-gray-700'>{item.gender} - {item.category}</span>
 
 
@@ -123,7 +123,8 @@ const WishlistPage = () => {
                                     </div>
 
                                     <div className='flex flex-col absolute right-2 items-end'>
-                                        <span className='text-gray-400 line-through text-xs text-extralight'>{formatPrice(item.cost)}</span>
+                                        {item.cost>item.price && <span className='text-gray-400 line-through text-xs text-extralight'>{formatPrice(item.cost)}</span>}
+                                        
                                         <span className=''>{formatPrice(item.price)}</span>
                                     </div>
 

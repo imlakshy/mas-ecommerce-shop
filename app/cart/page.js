@@ -232,7 +232,7 @@ const CartPage = () => {
           <img src="https://i.postimg.cc/K8VFC1p5/M-s-1.png" alt="Más" className="w-[100px]" />
         </div>
 
-        <div className='text-center text-4xl pt-2 font-extralight'>
+        <div className='text-center text-3xl md:text-4xl pt-2 font-extralight'>
           Your Shopping Cart
         </div>
       </div>
