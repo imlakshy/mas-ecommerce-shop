@@ -69,84 +69,84 @@ const NewArrivals = () => {
                                     <div className="group relative block h-50 aspect-[2/3] overflow-hidden rounded-t-lg bg-gray-100">
                                         <img src={item.images[0]} loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
 
-                                        <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">{item.price < item.cost ? `-${((item.cost - item.price) / item.cost * 100).toFixed(0)}%` : 'New'}</span>
+                                        <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-1.5 md:px-3 md:py-1.5 text-xs md:text-sm font-semibold uppercase tracking-wider text-white">{item.price < item.cost ? `-${((item.cost - item.price) / item.cost * 100).toFixed(0)}%` : 'New'}</span>
                                     </div>
 
                                     <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
                                         <div className="flex flex-col">
-                                            <a href="#" className="font-bold text-gray-800 transition duration-100 line-clamp-1 hover:text-gray-500 ">{item.name}</a>
-                                            <span className="text-sm text-gray-500 lg:text-base">by {item.brand}</span>
+                                            <span href="#" className="text-[12px] md:text-base font-bold text-gray-800 transition duration-100 line-clamp-1 hover:text-gray-500 ">{item.name}</span>
+                                            <span className="text-[10px] md:text-sm text-gray-500 lg:text-base">by {item.brand}</span>
                                         </div>
 
-                                        <div className="flex flex-col items-end">
+                                        <div className="text-[12px] md:text-base flex flex-col items-end">
                                             <span className="font-bold ">{formatPrice(item.price)}</span>
 
-                                            {item.cost > item.price && <span className="text-sm text-red-500 line-through">{formatPrice(item.cost)}</span>}
+                                            {item.cost > item.price && <span className=" text-red-500 line-through">{formatPrice(item.cost)}</span>}
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        <Button className="text-center w-[207px] mt-4 text-lg">View More</Button>
+                        <Button onClick={() => router.push('/products')} className="text-center md:w-[207px] mt-4 md:text-lg">View More</Button>
                     </>)}
 
                     {activeButton === "womens" && (<>
                         <div id='productsSection' className="products grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {womensFashion.map((item) => (
-                                <div key={item.id}>
+                                <div key={item.id} onClick={() => router.push(`/product/${item.id}`)} className='cursor-pointer'>
                                     <div className="group relative block h-50 aspect-[2/3] overflow-hidden rounded-t-lg bg-gray-100">
                                         <img src={item.images[0]} loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
 
-                                        <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">{item.price < item.cost ? `-${((item.cost - item.price) / item.cost * 100).toFixed(0)}%` : 'New'}</span>
+                                        <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-1.5 md:px-3 md:py-1.5 text-xs md:text-sm font-semibold uppercase tracking-wider text-white">{item.price < item.cost ? `-${((item.cost - item.price) / item.cost * 100).toFixed(0)}%` : 'New'}</span>
                                     </div>
 
                                     <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
                                         <div className="flex flex-col">
-                                            <a href="#" className="font-bold text-gray-800 transition duration-100 line-clamp-1 hover:text-gray-500 ">{item.name}</a>
-                                            <span className="text-sm text-gray-500 lg:text-base">by {item.brand}</span>
+                                            <span href="#" className="text-[12px] md:text-base font-bold text-gray-800 transition duration-100 line-clamp-1 hover:text-gray-500 ">{item.name}</span>
+                                            <span className="text-[10px] md:text-sm text-gray-500 lg:text-base">by {item.brand}</span>
                                         </div>
 
-                                        <div className="flex flex-col items-end">
+                                        <div className="text-[12px] md:text-base flex flex-col items-end">
                                             <span className="font-bold ">{formatPrice(item.price)}</span>
 
-                                            {item.cost > item.price && <span className="text-sm text-red-500 line-through">{formatPrice(item.cost)}</span>}
+                                            {item.cost > item.price && <span className=" text-red-500 line-through">{formatPrice(item.cost)}</span>}
                                         </div>
                                     </div>
                                 </div>
                             ))}
 
                         </div>
-                        <Button className="text-center w-[207px] mt-4 text-lg">View More</Button>
+                        <Button onClick={() => router.push('/products')} className="text-center md:w-[207px] mt-4 md:text-lg">View More</Button>
                     </>)}
 
                     {activeButton === "discount" && (<>
                         <div id='productsSection' className="products grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {discountDeals.map((item) => (
-                                <div key={item.id}>
+                                <div key={item.id} onClick={() => router.push(`/product/${item.id}`)} className='cursor-pointer'>
                                     <div className="group relative block h-50 aspect-[2/3] overflow-hidden rounded-t-lg bg-gray-100">
                                         <img src={item.images[0]} loading="lazy" alt="Photo by Austin Wade" className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-110" />
 
-                                        <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-3 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">{item.price < item.cost ? `-${((item.cost - item.price) / item.cost * 100).toFixed(0)}%` : 'New'}</span>
+                                        <span className="absolute left-0 top-3 rounded-r-lg bg-red-500 px-1.5 md:px-3 md:py-1.5 text-xs md:text-sm font-semibold uppercase tracking-wider text-white">{item.price < item.cost ? `-${((item.cost - item.price) / item.cost * 100).toFixed(0)}%` : 'New'}</span>
                                     </div>
 
                                     <div className="flex w-auto items-start justify-between gap-2 rounded-b-lg bg-gray-100 p-4">
                                         <div className="flex flex-col">
-                                            <a href="#" className="font-bold text-gray-800 transition duration-100 line-clamp-1 hover:text-gray-500 ">{item.name}</a>
-                                            <span className="text-sm text-gray-500 lg:text-base">by {item.brand}</span>
+                                            <span href="#" className="text-[12px] md:text-base font-bold text-gray-800 transition duration-100 line-clamp-1 hover:text-gray-500 ">{item.name}</span>
+                                            <span className="text-[10px] md:text-sm text-gray-500 lg:text-base">by {item.brand}</span>
                                         </div>
 
-                                        <div className="flex flex-col items-end">
+                                        <div className="text-[12px] md:text-base flex flex-col items-end">
                                             <span className="font-bold ">{formatPrice(item.price)}</span>
 
-                                            {item.cost > item.price && <span className="text-sm text-red-500 line-through">{formatPrice(item.cost)}</span>}
+                                            {item.cost > item.price && <span className=" text-red-500 line-through">{formatPrice(item.cost)}</span>}
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        <Button className="text-center w-[207px] mt-4 text-lg">View More</Button>
+                        <Button onClick={() => router.push('/products')} className="text-center md:w-[207px] mt-4 md:text-lg">View More</Button>
                     </>)}
 
 

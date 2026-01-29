@@ -2,25 +2,34 @@
 import React, { useEffect } from 'react'
 import Image from 'next/image'
 import { CheckCircle2, X } from 'lucide-react'
+import CartConfrim from './CartConfirmation'
 
 export default function CartAddedPopup({ open, product, qty = 1, size, color, onClose, onGoToCart }) {
     const [isVisible, setIsVisible] = React.useState(false)
 
     useEffect(() => {
         if (open) {
-            setIsVisible(true)
+            setIsVisible(true);
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
         }
-    }, [open])
+        
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [open]);
+
 
     if (!open || !product) return null
 
     return (
-        <>
+        <CartConfrim>
             <div
                 className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
                     }`} />
 
-            <div className={`fixed top-24 right-1/2 md:right-4 z-50 min-w-[355px] transition-all duration-300 transform ${isVisible
+            <div className={`fixed top-8 md:top-24 right-1/2 md:right-4 z-50 min-w-[355px] transition-all duration-300 transform ${isVisible
                 ? 'translate-x-1/2 md:translate-x-0 opacity-100'
                 : 'translate-x-[120%] opacity-0'
                 }`}>
@@ -98,6 +107,6 @@ export default function CartAddedPopup({ open, product, qty = 1, size, color, on
                     </div>
                 </div>
             </div>
-        </>
+        </CartConfrim>
     )
 }

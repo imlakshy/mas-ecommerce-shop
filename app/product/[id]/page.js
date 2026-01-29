@@ -4,7 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
+import Modal from '@/components/Modal'
 import { Heart, LucideShoppingBag, Minus, Plus, Share2, Check, Star, ArrowLeft, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/createSupabaseClient'
 import { toast } from 'sonner'
@@ -216,7 +216,9 @@ const ProductDetailPage = () => {
                         <div className="flex flex-col gap-4 items-center">
                             {/* Main Image */}
                             <div className='w-full md:w-[70%] flex items-center gap-4 md:gap-6'>
-                                <ArrowLeft onClick={handlePrev} className='cursor-pointer w-8 h-8' />
+                                <div onClick={handleNext} className='cursor-pointer h-full flex items-center justify-center'>
+                                    <ArrowLeft onClick={handlePrev} className='w-6 h-6' />
+                                </div>
                                 <div className="relative w-full aspect-[2/3] bg-gray-100 rounded-lg overflow-hidden">
                                     <Image
                                         src={product?.images[selectedImage]}
@@ -232,7 +234,10 @@ const ProductDetailPage = () => {
                                         <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
                                     </button>
                                 </div>
-                                <ArrowRight onClick={handleNext} className='cursor-pointer w-8 h-8' />
+                                <div onClick={handleNext} className='cursor-pointer h-full flex items-center justify-center'>
+                                    <ArrowRight onClick={handleNext} className='cursor-pointer w-6 h-6' />
+                                </div>
+
                             </div>
 
                             {/* Thumbnail Images */}
@@ -264,7 +269,7 @@ const ProductDetailPage = () => {
                             </div>
 
                             {/* Price */}
-                            <div className="mb-6">
+                            <div className="mb-2 md:mb-6">
                                 <div className="flex items-center gap-3 md:mb-2">
                                     <span className="text-3xl font-bold">{formatPrice(product?.price)}</span>
                                     {(product?.cost > product?.price) > 0 && (
@@ -395,7 +400,7 @@ const ProductDetailPage = () => {
                                     <LucideShoppingBag className="w-5 h-5 mr-2" />
                                     {isInCart ? 'Go to Cart' : 'Add to Cart'}
                                 </Button>
-                                
+
                                 <Button
                                     onClick={() => handleAddToWishlist(product.id)}
                                     variant="outline"
