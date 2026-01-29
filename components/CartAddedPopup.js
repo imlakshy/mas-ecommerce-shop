@@ -3,8 +3,12 @@ import React, { useEffect } from 'react'
 import Image from 'next/image'
 import { CheckCircle2, X } from 'lucide-react'
 import CartConfrim from './CartConfirmation'
+import { useRouter } from 'next/navigation'
 
-export default function CartAddedPopup({ open, product, qty = 1, size, color, onClose, onGoToCart }) {
+export default function CartAddedPopup({ open, product, qty = 1, size, color, onClose }) {
+
+    const router = useRouter();
+
     const [isVisible, setIsVisible] = React.useState(false)
 
     useEffect(() => {
@@ -14,7 +18,7 @@ export default function CartAddedPopup({ open, product, qty = 1, size, color, on
         } else {
             document.body.style.overflow = "";
         }
-        
+
         return () => {
             document.body.style.overflow = "";
         };
@@ -26,8 +30,7 @@ export default function CartAddedPopup({ open, product, qty = 1, size, color, on
     return (
         <CartConfrim>
             <div
-                className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                    }`} />
+                className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} pointer-events-auto`} />
 
             <div className={`fixed top-8 md:top-24 right-1/2 md:right-4 z-50 min-w-[355px] transition-all duration-300 transform ${isVisible
                 ? 'translate-x-1/2 md:translate-x-0 opacity-100'
@@ -90,16 +93,14 @@ export default function CartAddedPopup({ open, product, qty = 1, size, color, on
                             {/* Action buttons */}
                             <div className="mt-4 flex gap-2">
                                 <button
-                                    onClick={onGoToCart}
-                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg font-medium text-sm transition-colors"
-                                >
+                                    onClick={() => { router.push('/cart') }}
+                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg font-medium text-sm transition-colors cursor-pointer">
                                     View Cart
                                 </button>
 
                                 <button
-                                    onClick={onClose}
-                                    className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 px-3 rounded-lg font-medium text-sm transition-colors"
-                                >
+                                    onClick={() => { router.push('/products') }}
+                                    className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 px-3 rounded-lg font-medium text-sm transition-colors cursor-pointer">
                                     Keep Shopping
                                 </button>
                             </div>

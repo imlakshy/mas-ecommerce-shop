@@ -12,12 +12,15 @@ const OrdersPage = () => {
     const router = useRouter();
     const { user, loading } = useAuth();
     const [mounted, setMounted] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [trackingModal, setTrackingModal] = useState(null);
     const [invoiceModal, setInvoiceModal] = useState(null);
 
     const [orders, setOrders] = useState([]);
+
+
 
     useEffect(() => {
         if (trackingModal || invoiceModal || selectedOrder) {
@@ -39,7 +42,8 @@ const OrdersPage = () => {
         if (!user) return;
 
         const init = async () => {
-            const { data: ordersData } = await supabase.from("orders")
+           try{
+             const { data: ordersData } = await supabase.from("orders")
                 .select(`*,
                     addresses(*),
                 order_items(*,
@@ -52,6 +56,9 @@ const OrdersPage = () => {
                 .order("created_at", { ascending: false }).limit(3);
 
             setOrders(ordersData);
+           }finally{
+            setIsLoading(false);
+           }
         }
         init();
 
@@ -93,96 +100,105 @@ const OrdersPage = () => {
                     </div>
                 </div>
 
-                <div className='flex flex-col gap-8 md:gap-12 flex-1 max-w-5xl mx-auto w-full'>
-                    {orders?.map((order) => (
-                        <div
-                            key={order.id}
-                            className='border-b pb-8 last:border-b-0'>
-                            {/* Order Header */}
-                            <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
-                                <div className='flex flex-col gap-1'>
-                                    <div className='flex items-center gap-3'>
-                                        <span className='text-lg font-semibold'>{order.order_no}</span>
-                                        <span classNdateame={`text-sm font-light flex items-center gap-1 ${order.statusColor}`}>
-                                            {getStatusIcon(order.status)}
-                                            {order.status}
-                                        </span>
-                                    </div>
-                                    <span className='text-sm text-gray-600 font-light'>Ordered on {new Date(order.created_at).toLocaleDateString()}</span>
-                                </div>
-                                <div className='flex flex-col items-end'>
-                                    <span className='text-lg font-semibold'>{formatPrice(order.total_amount)}</span>
-                                    <span className='text-xs text-gray-600 font-light'>{order.order_items.length} item(s)</span>
-                                </div>
-                            </div>
-
-                            {/* Order Items - First Product Preview */}
-                            {order.order_items.length > 0 && (
-                                <div
-                                    className='flex items-start gap-4 border-b pb-6 mb-6 cursor-pointer hover:bg-gray-50 transition-all p-2 -m-2 rounded '
-                                    onClick={() => setSelectedOrder(order)}>
-                                    <div className='h-24 md:h-32 lg:h-40 relative flex-shrink-0 aspect-[2/3]'>
-                                        <Image
-                                            src={order.order_items[0].products.images[0]}
-                                            alt={order.order_items[0].products.name[0]}
-                                            fill
-                                            className='object-cover' />
-                                    </div>
-                                    <div className='h-24 md:h-32 lg:h-40 flex justify-between flex-col flex-1 min-w-0'>
-                                        <div className='flex flex-col gap-1'>
-                                            <span className='text-sm text-gray-700'>{order.order_items[0].products.brand}</span>
-                                            <span className='text-sm font-semibold line-clamp-2'>{order.order_items[0].products.name}</span>
-                                            {order.order_items.length > 1 && (
-                                                <span className='text-xs text-gray-600 font-light mt-1'>
-                                                    +{order.order_items.length - 1} more item{order.order_items.length - 1 > 1 ? 's' : ''}
-                                                </span>
-                                            )}
+                {isLoading ? (
+                    <div className='flex items-center justify-center min-h-[400px]'>
+                        <div className='flex flex-col items-center gap-4'>
+                            <div className='w-12 h-12 border-4 border-gray-300 border-t-black rounded-full animate-spin'></div>
+                            <span className='text-gray-600 text-sm'>Loading your orders...</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className='flex flex-col gap-8 md:gap-12 flex-1 max-w-5xl mx-auto w-full'>
+                        {orders?.map((order) => (
+                            <div
+                                key={order.id}
+                                className='border-b pb-8 last:border-b-0'>
+                                {/* Order Header */}
+                                <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
+                                    <div className='flex flex-col gap-1'>
+                                        <div className='flex items-center gap-3'>
+                                            <span className='text-lg font-semibold'>{order.order_no}</span>
+                                            <span classNdateame={`text-sm font-light flex items-center gap-1 ${order.statusColor}`}>
+                                                {getStatusIcon(order.status)}
+                                                {order.status}
+                                            </span>
                                         </div>
-
-                                        <div className='flex flex-col'>
-                                            <span className='text-sm text-gray-700'>Shipping To</span>
-                                            <span className='text-sm font-semibold line-clamp-2'>{order.addresses.full_name}</span>
-                                            <span className='text-xs text-gray-600 font-light mt-1'>{order.addresses.zip}</span>
-                                        </div>
+                                        <span className='text-sm text-gray-600 font-light'>Ordered on {new Date(order.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className='flex flex-col items-end'>
+                                        <span className='text-lg font-semibold'>{formatPrice(order.total_amount)}</span>
+                                        <span className='text-xs text-gray-600 font-light'>{order.order_items.length} item(s)</span>
                                     </div>
                                 </div>
-                            )}
 
-                            {/* Order Actions */}
-                            <div className='flex gap-3 mt-6'>
-                                <button
-                                    onClick={() => setTrackingModal(order)}
-                                    className='border-2 border-black px-4 py-2 text-sm font-light hover:bg-gray-100 transition-all'>
-                                    Track Order
-                                </button>
-                                <button
-                                    onClick={() => setInvoiceModal(order)}
-                                    className='border-2 border-black px-4 py-2 text-sm font-light hover:bg-gray-100 transition-all flex items-center gap-1'>
-                                    View Invoice <ArrowRight className='w-3 h-3' />
-                                </button>
-                                {order.status === 'Delivered' && (
-                                    <button className='border-2 border-black px-4 py-2 text-sm font-light hover:bg-gray-100 transition-all'>
-                                        Reorder
-                                    </button>
+                                {/* Order Items - First Product Preview */}
+                                {order.order_items.length > 0 && (
+                                    <div
+                                        className='flex items-start gap-4 border-b pb-6 mb-6 cursor-pointer hover:bg-gray-50 transition-all p-2 -m-2 rounded '
+                                        onClick={() => setSelectedOrder(order)}>
+                                        <div className='h-24 md:h-32 lg:h-40 relative flex-shrink-0 aspect-[2/3]'>
+                                            <Image
+                                                src={order.order_items[0].products.images[0]}
+                                                alt={order.order_items[0].products.name[0]}
+                                                fill
+                                                className='object-cover' />
+                                        </div>
+                                        <div className='h-24 md:h-32 lg:h-40 flex justify-between flex-col flex-1 min-w-0'>
+                                            <div className='flex flex-col gap-1'>
+                                                <span className='text-sm text-gray-700'>{order.order_items[0].products.brand}</span>
+                                                <span className='text-sm font-semibold line-clamp-2'>{order.order_items[0].products.name}</span>
+                                                {order.order_items.length > 1 && (
+                                                    <span className='text-xs text-gray-600 font-light mt-1'>
+                                                        +{order.order_items.length - 1} more item{order.order_items.length - 1 > 1 ? 's' : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className='flex flex-col'>
+                                                <span className='text-sm text-gray-700'>Shipping To</span>
+                                                <span className='text-sm font-semibold line-clamp-2'>{order.addresses.full_name}</span>
+                                                <span className='text-xs text-gray-600 font-light mt-1'>{order.addresses.zip}</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 )}
-                            </div>
-                        </div>
-                    ))}
 
-                    {/* Empty State (if no orders) */}
-                    {orders && orders.length === 0 && (
-                        <div className='pt-8 text-center'>
-                            <span className='text-3xl font-bold block mb-2'>No orders yet</span>
-                            <span className='text-gray-500 block mb-6'>Start shopping to see your orders here</span>
-                            <button
-                                onClick={() => router.push('/')}
-                                className='border-2 border-black px-6 py-2 text-sm font-light hover:bg-gray-100 transition-all flex items-center gap-2 mx-auto'
-                            >
-                                Start Shopping <ArrowRight className='w-4 h-4' />
-                            </button>
-                        </div>
-                    )}
-                </div>
+                                {/* Order Actions */}
+                                <div className='flex gap-3 mt-6'>
+                                    <button
+                                        onClick={() => setTrackingModal(order)}
+                                        className='border-2 border-black px-4 py-2 text-sm font-light hover:bg-gray-100 transition-all'>
+                                        Track Order
+                                    </button>
+                                    <button
+                                        onClick={() => setInvoiceModal(order)}
+                                        className='border-2 border-black px-4 py-2 text-sm font-light hover:bg-gray-100 transition-all flex items-center gap-1'>
+                                        View Invoice <ArrowRight className='w-3 h-3' />
+                                    </button>
+                                    {order.status === 'Delivered' && (
+                                        <button className='border-2 border-black px-4 py-2 text-sm font-light hover:bg-gray-100 transition-all'>
+                                            Reorder
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Empty State (if no orders) */}
+                        {orders && orders.length === 0 && (
+                            <div className='pt-8 text-center'>
+                                <span className='text-3xl font-bold block mb-2'>No orders yet</span>
+                                <span className='text-gray-500 block mb-6'>Start shopping to see your orders here</span>
+                                <button
+                                    onClick={() => router.push('/')}
+                                    className='border-2 border-black px-6 py-2 text-sm font-light hover:bg-gray-100 transition-all flex items-center gap-2 mx-auto'
+                                >
+                                    Start Shopping <ArrowRight className='w-4 h-4' />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Order Details Modal */}
@@ -293,8 +309,7 @@ const OrdersPage = () => {
                         <div className='mt-6'>
                             <button
                                 onClick={() => setSelectedOrder(null)}
-                                className='w-full border-2 border-black p-2 text-sm font-light hover:bg-gray-100 transition-all'
-                            >
+                                className='w-full border-2 border-black p-2 text-sm font-light hover:bg-gray-100 transition-all'>
                                 Close
                             </button>
                         </div>

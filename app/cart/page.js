@@ -11,6 +11,7 @@ const CartPage = () => {
   const router = useRouter();
   const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
@@ -59,13 +60,17 @@ const CartPage = () => {
     if (!user) return;
 
     const init = async () => {
-      const data = await supabase.from("cart").
+      try{
+        const data = await supabase.from("cart").
         select(`
           *,
           products(*)`)
         .eq("user_id", user.id);
 
       setCartItems(data.data || []);
+      }finally{
+        setIsLoading(false);
+      }
     }
     init();
 
@@ -186,11 +191,11 @@ const CartPage = () => {
         shipping_fee: shippingFee,
         payment_method: 'COD'
       }).select().single();
-      
+
 
     if (error) {
       console.log(error);
-      
+
       toast.error("Failed to create order. Please try again.");
       return;
     }
@@ -232,7 +237,15 @@ const CartPage = () => {
         </div>
       </div>
 
-      <div className='flex flex-col max-h-full md:flex-row gap-6 overflow-auto lg:gap-20 flex-1'>
+      {isLoading ? (
+        <div className='flex items-center justify-center min-h-[400px]'>
+              <div className='flex flex-col items-center gap-4'>
+                <div className='w-12 h-12 border-4 border-gray-300 border-t-black rounded-full animate-spin'></div>
+                <span className='text-gray-600 text-sm'>Loading your cart...</span>
+              </div>
+            </div>
+      ):(
+        <div className='flex flex-col max-h-full md:flex-row gap-6 overflow-auto lg:gap-20 flex-1'>
         {/* Cart Items */}
         <div className='w-full md:w-3/4 py-1 md:py-2 lg:py-4 md:overflow-auto'>
           {cartItems.length > 0 && cartItems.map((item) => (
@@ -323,18 +336,18 @@ const CartPage = () => {
 
           {cartItems.length === 0 && (
             <div className='pt-8 pb-4'>
-            <span className='text-3xl font-bold'>Nothing else here</span><br />
-            <span className='text-gray-500'>Find something special to add...</span>
-          </div>
+              <span className='text-3xl font-bold'>Nothing else here</span><br />
+              <span className='text-gray-500'>Find something special to add...</span>
+            </div>
           )}
         </div>
 
         {/* Customer Information & Order Summary */}
         <div
-        className='pb-24 w-full md:w-1/4 min-w-[300px] md:min-w-[270px] flex flex-col'>
+          className='pb-24 w-full md:w-1/4 min-w-[300px] md:min-w-[270px] flex flex-col'>
           {/* Customer Information */}
-          <div 
-          className='bg-[#f5f5f5] md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none flex flex-col border-black h-max'>
+          <div
+            className='bg-[#f5f5f5] md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none flex flex-col border-black h-max'>
             <span className='text-lg sm:text-2xl font-light pb-2'>Customer Information</span>
 
             <div className='flex flex-col gap-2 text-xs'>
@@ -372,7 +385,7 @@ const CartPage = () => {
                 <div className='flex justify-between text-sm'>
                   <span>Total</span>
                   <div>
-                    <span>{formatPrice(totalPrice)}</span>                    
+                    <span>{formatPrice(totalPrice)}</span>
                   </div>
                 </div>
 
@@ -405,6 +418,7 @@ const CartPage = () => {
 
         </div>
       </div>
+      )}
 
       {/* Address Selection Modal */}
       {showAddressModal && (

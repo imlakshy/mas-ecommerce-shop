@@ -149,7 +149,7 @@ const ProductDetailPage = () => {
             setShowCartPopup(true)
             fetchInCartStatus(selectedSize)
             setTimeout(() => {
-                setShowCartPopup(false)
+                // setShowCartPopup(false)
             }, 4000);
         }
     }

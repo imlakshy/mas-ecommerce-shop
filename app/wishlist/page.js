@@ -12,6 +12,8 @@ const WishlistPage = () => {
     const { user } = useAuth();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
     const [productIds, setProductIds] = useState([]);
     const [items, setItems] = useState([]);
     const [relatedProducts, setRelatedProducts] = useState([]);
@@ -33,8 +35,12 @@ const WishlistPage = () => {
     }
 
     const fetchItems = async () => {
-        const { data } = await supabase.from("products").select("*").in("id", productIds);
+        try{
+            const { data } = await supabase.from("products").select("*").in("id", productIds);
         setItems(data);
+        }finally{
+            setIsLoading(false);
+        }
     }
 
     const fetchWishlist = async () => {
@@ -43,7 +49,8 @@ const WishlistPage = () => {
     }
 
     useEffect(() => {
-        setMounted(true);
+        
+        setMounted(true);  
     }, []);
 
     useEffect(() => {
@@ -57,10 +64,8 @@ const WishlistPage = () => {
         if (user) fetchProductId();
     }, [productIds, isWishlisted]);
 
-
     const handleRemove = async (productId) => {
         await supabase.from("wishlist").delete().eq("product_id", productId).eq("user_id", user.id);
-
         fetchProductId();
     }
 
@@ -80,7 +85,14 @@ const WishlistPage = () => {
                     </div>
                 </div>
 
-                <div className='flex flex-col flex-1'>
+                {isLoading ? (
+                <div className='flex items-center justify-center min-h-[400px]'>
+                    <div className='flex flex-col items-center gap-4'>
+                        <div className='w-12 h-12 border-4 border-gray-300 border-t-black rounded-full animate-spin'></div>
+                        <span className='text-gray-600 text-sm'>Loading your wishlist...</span>
+                    </div>
+                </div>
+                ):(<div className='flex flex-col flex-1'>
                     {/* Wishlist Items */}
                     <div className='w-full py-1 md:py-2 lg:py-4 md:overflow-auto'>
                         {items.map((item) => (
@@ -107,7 +119,7 @@ const WishlistPage = () => {
                                     <div className='pt-2 md:pt-3 lg:pt-6 flex gap-2 text-xs font-semibold text-gray-500 items-center'>
                                         <span className='cursor-pointer hover:text-black' onClick={() => handleRemove(item.id)}>Remove</span>
                                         |
-                                        <span onClick={()=>router.push(`/product/${item.id}`)} className='cursor-pointer hover:text-black'>Move to cart <ArrowRight className="inline-block w-4 h-4" /></span>
+                                        <span onClick={() => router.push(`/product/${item.id}`)} className='cursor-pointer hover:text-black'>Move to cart <ArrowRight className="inline-block w-4 h-4" /></span>
                                     </div>
 
                                     <div className='flex flex-col absolute right-2 items-end'>
@@ -190,7 +202,7 @@ const WishlistPage = () => {
                             })}
                         </div>
                     </div>
-                </div>
+                </div>)}
             </div >
         </div>)
 }
