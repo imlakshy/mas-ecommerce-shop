@@ -60,15 +60,15 @@ const CartPage = () => {
     if (!user) return;
 
     const init = async () => {
-      try{
+      try {
         const data = await supabase.from("cart").
-        select(`
+          select(`
           *,
           products(*)`)
-        .eq("user_id", user.id);
+          .eq("user_id", user.id);
 
-      setCartItems(data.data || []);
-      }finally{
+        setCartItems(data.data || []);
+      } finally {
         setIsLoading(false);
       }
     }
@@ -179,8 +179,53 @@ const CartPage = () => {
     }
   };
 
-  const handleCheckout = async () => {
-    const { data: order, error } = await supabase.from("orders")
+  // const handleCheckout = async () => {
+  //   const { data: order, error } = await supabase.from("orders")
+  //     .insert({
+  //       user_id: user.id,
+  //       address_id: selectedAddress.id,
+  //       total_amount: totalAmount,
+  //       total_price: totalPrice,
+  //       total_mrp: totalMRP,
+  //       coupondiscount: couponDiscount,
+  //       shipping_fee: shippingFee,
+  //       payment_method: 'COD'
+  //     }).select().single();
+
+
+  //   if (error) {
+  //     console.log(error);
+
+  //     toast.error("Failed to create order. Please try again.");
+  //     return;
+  //   }
+
+  //   const orderItems = cartItems.map(item => ({
+  //     order_id: order.id,
+  //     product_id: item.products.id,
+  //     qty: item.qty,
+  //     size: item.size,
+  //     color: item.color,
+  //     price: item.products.price,
+  //   }))
+
+  //   const { error: orderItemsError } = await supabase.from("order_items").insert(orderItems);
+
+
+  //   if (orderItemsError) {
+  //     toast.error("Failed to save order items. Please try again.");
+  //     return;
+  //   }
+
+  //   await supabase.from("cart").delete().eq("user_id", user.id);
+
+  //   router.push(`/orders/success?orderId=${order.id}`);
+  // };
+
+
+  const saveOrder = async (paymentMethod, paymentId = null) => {
+    const { data: order, error } = await supabase
+      .from("orders")
       .insert({
         user_id: user.id,
         address_id: selectedAddress.id,
@@ -189,31 +234,33 @@ const CartPage = () => {
         total_mrp: totalMRP,
         coupondiscount: couponDiscount,
         shipping_fee: shippingFee,
-        payment_method: 'COD'
-      }).select().single();
-
+        payment_method: paymentMethod,
+      })
+      .select()
+      .single();
 
     if (error) {
-      console.log(error);
-
-      toast.error("Failed to create order. Please try again.");
+      console.error(error);
+      toast.error("Failed to create order.");
       return;
     }
 
-    const orderItems = cartItems.map(item => ({
+    const orderItems = cartItems.map((item) => ({
       order_id: order.id,
       product_id: item.products.id,
       qty: item.qty,
       size: item.size,
       color: item.color,
       price: item.products.price,
-    }))
+    }));
 
-    const { error: orderItemsError } = await supabase.from("order_items").insert(orderItems);
+    const { error: itemsError } = await supabase
+      .from("order_items")
+      .insert(orderItems);
 
-
-    if (orderItemsError) {
-      toast.error("Failed to save order items. Please try again.");
+    if (itemsError) {
+      console.error(itemsError);
+      toast.error("Failed to save order items.");
       return;
     }
 
@@ -221,6 +268,108 @@ const CartPage = () => {
 
     router.push(`/orders/success?orderId=${order.id}`);
   };
+
+  const handleCheckout = async (paymentMethod = "COD") => {
+    if (!user || !selectedAddress) {
+      toast.error("Please select a delivery address.");
+      return;
+    }
+
+    // Existing COD flow
+    if (paymentMethod === "COD") {
+      await saveOrder("COD");
+      return;
+    }
+
+    try {
+      // Load Razorpay checkout script
+      if (!window.Razorpay) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.onload = resolve;
+          script.onerror = reject;
+          document.body.appendChild(script);
+        });
+      }
+
+      // Create Razorpay order
+      const response = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: Math.round(Number(totalAmount) * 100),
+        }),
+      });
+
+      const razorpayOrder = await response.json();
+
+      if (!response.ok) {
+        throw new Error(razorpayOrder.error || "Could not start payment");
+      }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        name: "MAS",
+        description: "Clothing order",
+        order_id: razorpayOrder.id,
+
+        method: "upi",
+
+
+
+        handler: async (paymentResponse) => {
+          try {
+            const verifyResponse = await fetch(
+              "/api/razorpay/verify-payment",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(paymentResponse),
+              }
+            );
+
+            const verification = await verifyResponse.json();
+
+            if (!verifyResponse.ok || !verification.verified) {
+              toast.error("Payment could not be verified.");
+              return;
+            }
+
+            // Only after successful verification
+            await saveOrder("ONLINE", paymentResponse.razorpay_payment_id);
+          } catch (error) {
+            console.error(error);
+            toast.error(
+              "Payment verification failed. Please contact support before retrying."
+            );
+          }
+        },
+
+        modal: {
+          ondismiss: () => {
+            toast.error("Payment cancelled. You can try again.");
+          },
+        },
+
+        theme: { color: "#171717" },
+      };
+
+      const checkout = new window.Razorpay(options);
+
+      checkout.on("payment.failed", () => {
+        toast.error("Payment failed. Please try again.");
+      });
+
+      checkout.open();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || "Unable to start payment.");
+    }
+  };
+
 
   return (<div className={`transition-all duration-500 ease-out
     ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
@@ -239,185 +388,189 @@ const CartPage = () => {
 
       {isLoading ? (
         <div className='flex items-center justify-center min-h-[400px]'>
-              <div className='flex flex-col items-center gap-4'>
-                <div className='w-12 h-12 border-4 border-gray-300 border-t-black rounded-full animate-spin'></div>
-                <span className='text-gray-600 text-sm'>Loading your cart...</span>
-              </div>
-            </div>
-      ):(
+          <div className='flex flex-col items-center gap-4'>
+            <div className='w-12 h-12 border-4 border-gray-300 border-t-black rounded-full animate-spin'></div>
+            <span className='text-gray-600 text-sm'>Loading your cart...</span>
+          </div>
+        </div>
+      ) : (
         <div className='flex flex-col max-h-full md:flex-row gap-6 overflow-auto lg:gap-20 flex-1'>
-        {/* Cart Items */}
-        <div className='w-full md:w-3/4 py-1 md:py-2 lg:py-4 md:overflow-auto'>
-          {cartItems.length > 0 && cartItems.map((item) => (
-            <div key={item.id} className='border-b py-6 flex items-center min-w-[350px]'>
-              <div
-                className='h-24 md:h-36 lg:h-48 aspect-[2/3] mr-4 relative cursor-pointer'
-                onClick={() => router.push(`/product/${item.products.id}`)}>
-                <Image
-                  src={item.products.images[0]}
-                  alt="Product Image"
-                  fill
-                  className='object-cover'
-                />
-              </div>
-              <div className='flex flex-col justify-center flex-1 relative'>
-                <span className='text-xs md:text-sm text-gray-700'>{item.products.brand}</span>
-                <span className='text-sm md:text-base line-clamp-1 pb-2 lg:pb-4'>{item.products.name}</span>
+          {/* Cart Items */}
+          <div className='w-full md:w-3/4 py-1 md:py-2 lg:py-4 md:overflow-auto'>
+            {cartItems.length > 0 && cartItems.map((item) => (
+              <div key={item.id} className='border-b py-6 flex items-center min-w-[350px]'>
+                <div
+                  className='h-24 md:h-36 lg:h-48 aspect-[2/3] mr-4 relative cursor-pointer'
+                  onClick={() => router.push(`/product/${item.products.id}`)}>
+                  <Image
+                    src={item.products.images[0]}
+                    alt="Product Image"
+                    fill
+                    className='object-cover'
+                  />
+                </div>
+                <div className='flex flex-col justify-center flex-1 relative'>
+                  <span className='text-xs md:text-sm text-gray-700'>{item.products.brand}</span>
+                  <span className='text-sm md:text-base line-clamp-1 pb-2 lg:pb-4'>{item.products.name}</span>
 
-                {item.products.color && <span className='text-gray-600 font-light text-xs'>Color: {item.color}</span>}
+                  {item.products.color && <span className='text-gray-600 font-light text-xs'>Color: {item.color}</span>}
 
-                <div className='flex items-center pt-1 md:pt-2 lg:pt-4'>
-                  <label htmlFor="size" className='text-gray-600 font-light text-xs'>Size: {editItemId != item.id && item.size}</label>
+                  <div className='flex items-center pt-1 md:pt-2 lg:pt-4'>
+                    <label htmlFor="size" className='text-gray-600 font-light text-xs'>Size: {editItemId != item.id && item.size}</label>
 
-                  {editItemId === item.id && (
-                    <select
-                      id="size"
-                      value={item.size}
-                      onChange={
-                        async (e) => {
-                          await supabase.from("cart").update({ size: e.target.value }).eq("id", item.id)
-                          setEditItemId(null);
+                    {editItemId === item.id && (
+                      <select
+                        id="size"
+                        value={item.size}
+                        onChange={
+                          async (e) => {
+                            await supabase.from("cart").update({ size: e.target.value }).eq("id", item.id)
+                            setEditItemId(null);
+                          }
                         }
-                      }
-                      className="bg-transparent w-10 text-xs scale-70"
-                    >
-                      <option value={"S"}>S</option>
-                      <option value={"M"}>M</option>
-                      <option value={"L"}>L</option>
-                      <option value={"XL"}>XL</option>
-                      <option value={"XXL"}>XXL</option>
-                    </select>
-                  )}
+                        className="bg-transparent w-10 text-xs scale-70"
+                      >
+                        <option value={"S"}>S</option>
+                        <option value={"M"}>M</option>
+                        <option value={"L"}>L</option>
+                        <option value={"XL"}>XL</option>
+                        <option value={"XXL"}>XXL</option>
+                      </select>
+                    )}
 
-                </div>
+                  </div>
 
-                <div className='flex items-center pt-1 md:pt-2 lg:pt-4'>
-                  <label htmlFor="quantity" className='text-gray-600 font-light text-xs'>Qty: {editItemId != item.id && item.qty}</label>
+                  <div className='flex items-center pt-1 md:pt-2 lg:pt-4'>
+                    <label htmlFor="quantity" className='text-gray-600 font-light text-xs'>Qty: {editItemId != item.id && item.qty}</label>
 
-                  {editItemId === item.id && (
-                    <select
-                      id="quantity"
-                      value={item.qty}
-                      onChange={
-                        async (e) => {
-                          await supabase.from("cart").update({ qty: e.target.value }).eq("id", item.id)
-                          setEditItemId(null);
+                    {editItemId === item.id && (
+                      <select
+                        id="quantity"
+                        value={item.qty}
+                        onChange={
+                          async (e) => {
+                            await supabase.from("cart").update({ qty: e.target.value }).eq("id", item.id)
+                            setEditItemId(null);
+                          }
                         }
-                      }
-                      className="bg-transparent w-7 text-xs scale-70"
-                    >
-                      <option value={1}>1</option>
-                      <option value={2}>2</option>
-                      <option value={3}>3</option>
-                      <option value={4}>4</option>
-                      <option value={5}>5</option>
-                    </select>
-                  )}
+                        className="bg-transparent w-7 text-xs scale-70"
+                      >
+                        <option value={1}>1</option>
+                        <option value={2}>2</option>
+                        <option value={3}>3</option>
+                        <option value={4}>4</option>
+                        <option value={5}>5</option>
+                      </select>
+                    )}
+
+                  </div>
+
+                  <div className='pt-2 md:pt-3 lg:pt-6 flex gap-2 text-xs font-semibold text-gray-500'>
+                    <span className='cursor-pointer hover:text-black' onClick={() => setEditItemId(editItemId === item.id ? null : item.id)}>{editItemId === item.id ? "Done" : "Edit"}</span>
+                    |
+                    <span className='cursor-pointer hover:text-black' onClick={() => { handleRemove(item.products.id, item.size, item.color) }}>Remove</span>
+                    |
+                    <span className='cursor-pointer hover:text-black' onClick={() => handleMoveToWishlist(item.id, item.products.id)}>Move to wishlist</span>
+                  </div>
+
+                  <div className='text-xs md:text-base flex flex-col absolute right-2 items-end'>
+                    {item.products.price < item.products.cost && <span className='text-gray-400 line-through text-xs text-extralight'>{formatPrice(item.products.cost * item.qty)}</span>}
+
+                    <span className='text-sm md:text-base'>{formatPrice(item.products.price * item.qty)}</span>
+                  </div>
 
                 </div>
-
-                <div className='pt-2 md:pt-3 lg:pt-6 flex gap-2 text-xs font-semibold text-gray-500'>
-                  <span className='cursor-pointer hover:text-black' onClick={() => setEditItemId(editItemId === item.id ? null : item.id)}>{editItemId === item.id ? "Done" : "Edit"}</span>
-                  |
-                  <span className='cursor-pointer hover:text-black' onClick={() => { handleRemove(item.products.id, item.size, item.color) }}>Remove</span>
-                  |
-                  <span className='cursor-pointer hover:text-black' onClick={() => handleMoveToWishlist(item.id, item.products.id)}>Move to wishlist</span>
-                </div>
-
-                <div className='text-xs md:text-base flex flex-col absolute right-2 items-end'>
-                  {item.products.price < item.products.cost && <span className='text-gray-400 line-through text-xs text-extralight'>{formatPrice(item.products.cost * item.qty)}</span>}
-
-                  <span className='text-sm md:text-base'>{formatPrice(item.products.price * item.qty)}</span>
-                </div>
-
               </div>
-            </div>
-          ))}
+            ))}
 
-          {cartItems.length === 0 && (
-            <div className='pt-8 pb-4'>
-              <span className='text-3xl font-bold'>Nothing else here</span><br />
-              <span className='text-gray-500'>Find something special to add...</span>
-            </div>
-          )}
-        </div>
-
-        {/* Customer Information & Order Summary */}
-        <div
-          className='pb-24 w-full md:w-1/4 min-w-[300px] md:min-w-[270px] flex flex-col'>
-          {/* Customer Information */}
-          <div
-            className='bg-[#f5f5f5] md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none flex flex-col border-black h-max'>
-            <span className='text-lg sm:text-2xl font-light pb-2'>Customer Information</span>
-
-            <div className='flex flex-col gap-2 text-xs'>
-              <div className='text-sm font-semibold'>{selectedAddress?.full_name}</div>
-              <div>{selectedAddress?.address_line}</div>
-              <div>{selectedAddress?.zip}</div>
-              <div className='text-sm'>{selectedAddress?.phone}</div>
-              <span
-                className='text-xs text-gray-600 underline cursor-pointer hover:text-black pt-1'
-                onClick={() => {
-                  setShowAddressModal(true)
-                  setTempSelectedAddress(selectedAddress)
-                }}>
-                {selectedAddress ? "Change Address" : "Add Info"}
-              </span>
-            </div>
+            {cartItems.length === 0 && (
+              <div className='pt-8 pb-4'>
+                <span className='text-3xl font-bold'>Nothing else here</span><br />
+                <span className='text-gray-500'>Find something special to add...</span>
+              </div>
+            )}
           </div>
 
-          {/* Order Summary */}
-          <div className='flex flex-col border-black h-max'>
-            <span className='text-lg sm:text-2xl font-light pt-6 pb-2'>Order Summary</span>
-
-            <div className='flex flex-col gap-2'>
-              <span className='font-semibold pb-1 md:pb-2 lg:pb-4 underline underline-offset-4 text-xs md:text-sm lg:text-base'>{cartItems.length} Item(s)</span>
-
-              {cartItems.length > 0 && <>
-                <div className='flex justify-between text-sm'><span>Total MRP</span> <span>{formatPrice(totalMRP)}</span></div>
-
-                {totalMRP > totalPrice && <div className='flex justify-between text-sm'><span>Discount on MRP</span> <span className='text-primary'>-{formatPrice(totalMRP - totalPrice)}</span></div>}
-
-                <input type="text" id='discountCoupon' placeholder='Add a coupon' className='border border-black text-primary p-2 text-sm' />
-
-                {couponDiscount > 0 && <div className='flex justify-between text-sm'><span>Coupon Discount</span> <span className='text-primary'>-₹2,030</span></div>}
-
-                <div className='flex justify-between text-sm'>
-                  <span>Total</span>
-                  <div>
-                    <span>{formatPrice(totalPrice)}</span>
-                  </div>
-                </div>
-
-                <div className='flex justify-between text-sm'>
-                  <span>Shipping fee</span>
-                  <div>
-                    <span className={shippingFee > 0 ? " " : "text-gray-400 line-through"}>{formatPrice(99)}</span>
-
-                    {shippingFee === 0 && <span className='font-semibold text-primary'> FREE</span>}
-                  </div>
-                </div>
-
-                <div className='flex justify-between font-semibold border-t-2 py-2 my-2'>
-                  <span>Total Amount</span>
-                  <span>{formatPrice(totalAmount)}</span>
-                </div>
-              </>}
-
-            </div>
-          </div>
-
-          {/* Buttons */}
-          {cartItems.length > 0 && <div className='w-full mt-2 bg-black text-white hover:bg-gray-800 p-2 text-center text-sm cursor-pointer font-light'
-            onClick={handleCheckout}
-          >Checkout</div>}
-
+          {/* Customer Information & Order Summary */}
           <div
-            onClick={() => router.push("/wishlist")}
-            className='w-full mt-2 border-2 border-black p-2 text-center text-sm cursor-pointer font-light hover:bg-gray-100'>Add from wishlist</div>
+            className='pb-24 w-full md:w-1/4 min-w-[300px] md:min-w-[270px] flex flex-col'>
+            {/* Customer Information */}
+            <div
+              className='bg-[#f5f5f5] md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none flex flex-col border-black h-max'>
+              <span className='text-lg sm:text-2xl font-light pb-2'>Customer Information</span>
 
+              <div className='flex flex-col gap-2 text-xs'>
+                <div className='text-sm font-semibold'>{selectedAddress?.full_name}</div>
+                <div>{selectedAddress?.address_line}</div>
+                <div>{selectedAddress?.zip}</div>
+                <div className='text-sm'>{selectedAddress?.phone}</div>
+                <span
+                  className='text-xs text-gray-600 underline cursor-pointer hover:text-black pt-1'
+                  onClick={() => {
+                    setShowAddressModal(true)
+                    setTempSelectedAddress(selectedAddress)
+                  }}>
+                  {selectedAddress ? "Change Address" : "Add Info"}
+                </span>
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div className='flex flex-col border-black h-max'>
+              <span className='text-lg sm:text-2xl font-light pt-6 pb-2'>Order Summary</span>
+
+              <div className='flex flex-col gap-2'>
+                <span className='font-semibold pb-1 md:pb-2 lg:pb-4 underline underline-offset-4 text-xs md:text-sm lg:text-base'>{cartItems.length} Item(s)</span>
+
+                {cartItems.length > 0 && <>
+                  <div className='flex justify-between text-sm'><span>Total MRP</span> <span>{formatPrice(totalMRP)}</span></div>
+
+                  {totalMRP > totalPrice && <div className='flex justify-between text-sm'><span>Discount on MRP</span> <span className='text-primary'>-{formatPrice(totalMRP - totalPrice)}</span></div>}
+
+                  <input type="text" id='discountCoupon' placeholder='Add a coupon' className='border border-black text-primary p-2 text-sm' />
+
+                  {couponDiscount > 0 && <div className='flex justify-between text-sm'><span>Coupon Discount</span> <span className='text-primary'>-₹2,030</span></div>}
+
+                  <div className='flex justify-between text-sm'>
+                    <span>Total</span>
+                    <div>
+                      <span>{formatPrice(totalPrice)}</span>
+                    </div>
+                  </div>
+
+                  <div className='flex justify-between text-sm'>
+                    <span>Shipping fee</span>
+                    <div>
+                      <span className={shippingFee > 0 ? " " : "text-gray-400 line-through"}>{formatPrice(99)}</span>
+
+                      {shippingFee === 0 && <span className='font-semibold text-primary'> FREE</span>}
+                    </div>
+                  </div>
+
+                  <div className='flex justify-between font-semibold border-t-2 py-2 my-2'>
+                    <span>Total Amount</span>
+                    <span>{formatPrice(totalAmount)}</span>
+                  </div>
+                </>}
+
+              </div>
+            </div>
+
+            {/* Buttons */}
+            {cartItems.length > 0 && <div className='w-full mt-2 bg-black text-white hover:bg-gray-800 p-2 text-center text-sm cursor-pointer font-light'
+              onClick={() => handleCheckout("ONLINE")}
+            >Checkout</div>}
+            {cartItems.length > 0 && <div className='w-full mt-2 p-2 text-center text-sm cursor-pointer font-light italic hover:text-blue-600'
+              onClick={() => handleCheckout("COD")}
+            >or Pay at delivery!</div>}
+
+
+            <div
+              onClick={() => router.push("/wishlist")}
+              className='w-full mt-2 border-2 border-black p-2 text-center text-sm cursor-pointer font-light hover:bg-gray-100'>Add from wishlist</div>
+
+          </div>
         </div>
-      </div>
       )}
 
       {/* Address Selection Modal */}
